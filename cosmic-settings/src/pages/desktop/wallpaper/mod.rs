@@ -100,7 +100,7 @@ pub enum Message {
     Select(DefaultKey),
     /// Changes the slideshow parameter.
     Slideshow(bool),
-    /// State change from cosmic-bg
+    /// State change from wmde-bg
     UpdateState(cosmic_bg_config::state::State),
     Surface(surface::Action),
 }
@@ -149,7 +149,7 @@ pub struct Page {
     /// If set to `None`, all displays will have the same wallpaper.
     active_output: Option<String>,
 
-    /// Configuration parameters used by the cosmic-bg service.
+    /// Configuration parameters used by the wmde-bg service.
     wallpaper_service_config: wallpaper::Config,
 
     /// Cache for storing the image used by the display preview.
@@ -256,7 +256,7 @@ impl page::Page<crate::pages::Message> for Page {
         })
     }
 
-    /// Watch for state changes from the cosmic-bg session service.
+    /// Watch for state changes from the wmde-bg session service.
     fn subscription(
         &self,
         core: &cosmic::Core,
@@ -462,7 +462,7 @@ impl Page {
         }
     }
 
-    /// Applies the current settings to cosmic-bg.
+    /// Applies the current settings to wmde-bg.
     pub fn config_apply(&mut self) {
         let Some(output) = self.config_output().map(String::from) else {
             return;
@@ -1196,7 +1196,7 @@ pub fn settings() -> Section<crate::pages::Message> {
             let mut children = Vec::with_capacity(3);
 
             let mut show_slideshow_toggle = true;
-            // Slideshow is enabled if the background path from cosmic-bg is a directory
+            // Slideshow is enabled if the background path from wmde-bg is a directory
             let mut slideshow_enabled = page
                 .config_output()
                 .and_then(|output| page.wallpaper_service_config.entry(output))

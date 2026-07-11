@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Displays
+Comment=Manage display configuration settings.
+Type=Application
+Exec=wmde-settings displays
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;Display;
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-displays
+StartupNotify=true

@@ -90,7 +90,7 @@ pub fn set(config: &mut Config, entry: Entry) {
 #[must_use]
 pub fn cache_dir() -> Option<PathBuf> {
     dirs::cache_dir().map(|path| {
-        let cache = path.join("cosmic-settings/wallpapers");
+        let cache = path.join("wmde-settings/wallpapers");
         let _res = std::fs::create_dir_all(&cache);
         cache
     })

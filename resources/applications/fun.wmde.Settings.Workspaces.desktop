@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Workspaces
+Comment=Workspace orientation, overview, and multi-monitor behavior.
+Type=Application
+Exec=wmde-settings workspaces
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;Workspace;Orientation;Overview;Monitor;
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-workspaces
+StartupNotify=true

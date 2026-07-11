@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Time & Language
+Comment=Manage system date, time, region, and language.
+Type=Application
+Exec=wmde-settings time
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;System;Time;Date;Region;Language;
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-time-and-language
+StartupNotify=true

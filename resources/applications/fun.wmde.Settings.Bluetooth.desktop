@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Bluetooth
+Comment=Manage Bluetooth devices.
+Type=Application
+Exec=wmde-settings bluetooth
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;Bluetooth;
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-bluetooth
+StartupNotify=true

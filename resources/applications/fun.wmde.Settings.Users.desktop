@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Users
+Comment=Authentication and user accounts.
+Type=Application
+Exec=wmde-settings users
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;User;Account;
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-users
+StartupNotify=true

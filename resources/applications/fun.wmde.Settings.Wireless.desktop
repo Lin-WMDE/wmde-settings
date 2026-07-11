@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Wi-Fi
+Comment=Wi-Fi connections and connection profiles.
+Type=Application
+Exec=wmde-settings wireless
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;WiFi;Wi-Fi;Network;Connection;
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-wireless
+StartupNotify=true

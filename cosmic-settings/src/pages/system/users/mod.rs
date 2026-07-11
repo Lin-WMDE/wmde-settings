@@ -24,7 +24,7 @@ use url::Url;
 use zbus_polkit::policykit1::CheckAuthorizationFlags;
 
 const DEFAULT_ICON_FILE: &str = "/usr/share/pixmaps/faces/pop-robot.png";
-const USERS_ADMIN_POLKIT_POLICY_ID: &str = "com.system76.CosmicSettings.Users.Admin";
+const USERS_ADMIN_POLKIT_POLICY_ID: &str = "fun.wmde.Settings.Users.Admin";
 
 // AccountsService has a hard limit of 1MB for icon files
 // https://gitlab.freedesktop.org/accountsservice/accountsservice/-/blob/main/src/user.c#L3131
@@ -164,7 +164,7 @@ fn prepare_icon_file(path: &Path) -> Result<PathBuf, Box<dyn std::error::Error>>
 
     // Create a temporary file for the resized icon
     let temp_dir = std::env::temp_dir();
-    let temp_filename = format!("cosmic-settings-icon-{}.png", std::process::id());
+    let temp_filename = format!("wmde-settings-icon-{}.png", std::process::id());
     let temp_path = temp_dir.join(temp_filename);
 
     tracing::debug!("Saving resized icon to: {:?}", temp_path);

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Wallpaper
+Comment=Wallpaper images, colors, and slideshow options.
+Type=Application
+Exec=wmde-settings wallpaper
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;Wallpaper;Background;Slideshow;
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-desktop-wallpaper
+StartupNotify=true

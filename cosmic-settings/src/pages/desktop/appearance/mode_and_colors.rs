@@ -251,8 +251,8 @@ fn theme_mode<'a>(
     labels: &HashMap<String, usize>,
 ) -> impl Into<Element<'a, Message>> {
     let descriptions = &section.descriptions;
-    let dark_mode_illustration = from_name("illustration-appearance-mode-dark").handle();
-    let light_mode_illustration = from_name("illustration-appearance-mode-light").handle();
+    let dark_mode_illustration = from_name("wmde-illustration-appearance-mode-dark").handle();
+    let light_mode_illustration = from_name("wmde-illustration-appearance-mode-light").handle();
 
     container(
         cosmic::iced::widget::row![

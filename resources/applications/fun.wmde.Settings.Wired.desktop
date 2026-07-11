@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Wired
+Comment=Wired connections and connection profiles.
+Type=Application
+Exec=wmde-settings wired
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;Wired;LAN;Network;Connection;
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-wired
+StartupNotify=true

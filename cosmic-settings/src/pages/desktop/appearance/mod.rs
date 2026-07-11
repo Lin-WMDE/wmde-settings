@@ -685,7 +685,7 @@ impl page::Page<crate::pages::Message> for Page {
 
     fn subscription(&self, core: &cosmic::Core) -> Subscription<crate::pages::Message> {
         // Keep the Appearance page in sync when the daemon auto-switches light/dark.
-        core.watch_config::<ThemeMode>("com.system76.CosmicTheme.Mode")
+        core.watch_config::<ThemeMode>("fun.wmde.Theme.Mode")
             .map(|update| {
                 for why in update.errors {
                     tracing::error!(?why, "theme mode config load error");

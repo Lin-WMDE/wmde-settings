@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=VPN
+Comment=VPN connections and connection profiles.
+Type=Application
+Exec=wmde-settings vpn
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;VPN;Network;Connection;OpenVPN;OpenConnect;
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-vpn
+StartupNotify=true

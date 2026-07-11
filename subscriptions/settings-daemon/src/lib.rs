@@ -19,7 +19,7 @@ impl Hash for Wrapper {
     }
 }
 
-const DAEMON_NAME: &str = "com.system76.CosmicSettingsDaemon";
+const DAEMON_NAME: &str = "fun.wmde.SettingsDaemon";
 
 async fn wait_for_daemon(conn: &zbus::Connection) {
     let Ok(dbus) = zbus::fdo::DBusProxy::new(conn).await else {
@@ -121,9 +121,9 @@ pub enum Event {
 }
 
 #[zbus::proxy(
-    default_service = "com.system76.CosmicSettingsDaemon",
-    interface = "com.system76.CosmicSettingsDaemon",
-    default_path = "/com/system76/CosmicSettingsDaemon"
+    default_service = "fun.wmde.SettingsDaemon",
+    interface = "fun.wmde.SettingsDaemon",
+    default_path = "/fun/wmde/SettingsDaemon"
 )]
 trait CosmicSettingsDaemon {
     #[zbus(property)]

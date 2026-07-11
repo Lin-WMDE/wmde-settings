@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Desktop
+Comment=Wallpaper, appearance, panel, dock, window management and workspace settings.
+Type=Application
+Exec=wmde-settings desktop
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;Desktop;
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-desktop
+StartupNotify=true

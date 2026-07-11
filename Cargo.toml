@@ -25,8 +25,12 @@ git = "https://github.com/pop-os/libcosmic"
 [workspace.dependencies.cosmic-config]
 git = "https://github.com/pop-os/libcosmic"
 
+# wmde-bg renamed its config crate to `wmde-bg-config` (ships the `fun.wmde.Background`
+# id); alias it back to the `cosmic-bg-config` dependency key so every `cosmic_bg_config::`
+# import keeps resolving while reading/writing the WMDE background namespace.
 [workspace.dependencies.cosmic-bg-config]
-git = "https://github.com/pop-os/cosmic-bg"
+package = "wmde-bg-config"
+path = "../wmde-bg/config"
 
 [workspace.dependencies.cosmic-comp-config]
 git = "https://github.com/pop-os/cosmic-comp"
@@ -66,27 +70,42 @@ debug = true
 cosmic-protocols = { git = "https://github.com/pop-os/cosmic-protocols//", rev = "d0e95be" }
 cosmic-client-toolkit = { git = "https://github.com/pop-os/cosmic-protocols//", rev = "d0e95be" }
 
-# [patch.'https://github.com/pop-os/cosmic-settings-daemon']
-# cosmic-settings-config = { git = "https://github.com/pop-os/cosmic-settings-daemon//", branch = "input_nobuild" }
+# Consume the WMDE forks of the shared settings-daemon config/audio crates so the
+# repointed cross-component ids (fun.wmde.SettingsDaemon, fun.wmde.Settings.Shortcuts,
+# varlink fun.wmde.Settings/.Audio) resolve through the fork's constants (A.6).
+[patch.'https://github.com/pop-os/cosmic-settings-daemon']
+cosmic-settings-config = { path = "../wmde-settings-daemon/config" }
+cosmic-settings-daemon-config = { path = "../wmde-settings-daemon/cosmic-settings-daemon-config" }
+cosmic-settings-audio-client = { path = "../wmde-settings-daemon/audio-client" }
 
-# For development and testing purposes
-# [patch.'https://github.com/pop-os/libcosmic']
-# libcosmic = { path = "../libcosmic" }
-# cosmic-config = { path = "../libcosmic/cosmic-config" }
-# cosmic-theme = { path = "../libcosmic/cosmic-theme" }
-# iced_futures = { path = "../libcosmic/iced/futures" }
-# iced_winit = { path = "../libcosmic/iced/winit" }
+# Compositor config crate (fun.wmde.Comp) - keep the original crate name/dir, local path.
+[patch.'https://github.com/pop-os/cosmic-comp']
+cosmic-comp-config = { path = "../wmde-comp/cosmic-comp-config" }
 
-# libcosmic = { git = "https://github.com/pop-os/libcosmic//" }
-# cosmic-config = { git = "https://github.com/pop-os/libcosmic//" }
-# cosmic-theme = { git = "https://github.com/pop-os/libcosmic//" }
-# iced_futures = { git = "https://github.com/pop-os/libcosmic//" }
-# iced_winit = { git = "https://github.com/pop-os/libcosmic//" }
+# Panel config crate (fun.wmde.Panel*) - original crate name/dir, local path.
+[patch.'https://github.com/pop-os/cosmic-panel']
+cosmic-panel-config = { path = "../wmde-panel/cosmic-panel-config" }
 
-# [patch.'https://github.com/pop-os/dbus-settings-bindings']
-# cosmic-dbus-networkmanager = { path = "../dbus-settings-bindings/networkmanager" }
-# upower_dbus = { path = "../dbus-settings-bindings/upower" }
-# nm-secret-agent-manager = { git = "https://github.com/pop-os/dbus-settings-bindings//", branch = "nm-secret-agent" }
+# libcosmic / cosmic-config / cosmic-theme / iced family -> local WMDE fork.
+# Pinning the whole family here retires the git-vs-path double-resolution in Cargo.lock.
+[patch.'https://github.com/pop-os/libcosmic']
+libcosmic = { path = "../libcosmic" }
+cosmic-config = { path = "../libcosmic/cosmic-config" }
+cosmic-config-derive = { path = "../libcosmic/cosmic-config-derive" }
+cosmic-theme = { path = "../libcosmic/cosmic-theme" }
+iced = { path = "../libcosmic/iced" }
+iced_accessibility = { path = "../libcosmic/iced/accessibility" }
+iced_core = { path = "../libcosmic/iced/core" }
+iced_debug = { path = "../libcosmic/iced/debug" }
+iced_futures = { path = "../libcosmic/iced/futures" }
+iced_graphics = { path = "../libcosmic/iced/graphics" }
+iced_program = { path = "../libcosmic/iced/program" }
+iced_renderer = { path = "../libcosmic/iced/renderer" }
+iced_runtime = { path = "../libcosmic/iced/runtime" }
+iced_tiny_skia = { path = "../libcosmic/iced/tiny_skia" }
+iced_wgpu = { path = "../libcosmic/iced/wgpu" }
+iced_widget = { path = "../libcosmic/iced/widget" }
+iced_winit = { path = "../libcosmic/iced/winit" }
 
 [patch.crates-io]
 atspi = { git = "https://github.com/wash2/atspi" }

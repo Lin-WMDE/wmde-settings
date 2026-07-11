@@ -8,7 +8,7 @@ use std::sync::Arc;
 use futures::{SinkExt, StreamExt};
 use zbus::zvariant::ObjectPath;
 
-const AGENT_PATH: &str = "/org/bluez/agent/cosmic_settings";
+const AGENT_PATH: &str = "/org/bluez/agent/wmde_settings";
 
 pub async fn unregister(connection: zbus::Connection) -> zbus::Result<()> {
     let agent_path = ObjectPath::from_static_str_unchecked(AGENT_PATH);

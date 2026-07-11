@@ -4,7 +4,7 @@
 use cosmic::cosmic_config::{self, ConfigGet, ConfigSet};
 use cosmic::cosmic_theme::palette::Srgba;
 
-const NAME: &str = "com.system76.CosmicSettings";
+const NAME: &str = "fun.wmde.Settings";
 
 const ACTIVE_PAGE: &str = "active_page";
 const ACCENT_PALETTE_DARK: &str = "accent_palette_dark";

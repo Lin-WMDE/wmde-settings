@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=About
+Comment=Device name, hardware information, operating system defaults.
+Type=Application
+Exec=wmde-settings about
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;About
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-about
+StartupNotify=true

@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=WMDE Settings
+Comment=Settings application for WMDE.
+Type=Application
+Exec=wmde-settings
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;Settings;
+OnlyShowIn=WMDE
+Icon=fun.wmde.Settings
+StartupNotify=true

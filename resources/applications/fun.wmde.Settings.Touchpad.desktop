@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Touchpad
+Comment=Touchpad speed, click options, and gestures.
+Type=Application
+Exec=wmde-settings touchpad
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;System;Time;Date;Region;Language;
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-touchpad
+StartupNotify=true

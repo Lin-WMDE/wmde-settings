@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Dock
+Comment=An optional bar for apps and applets.
+Type=Application
+Exec=wmde-settings dock
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;Dock;Panel;Applet
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-dock
+StartupNotify=true

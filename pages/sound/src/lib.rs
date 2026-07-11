@@ -18,11 +18,11 @@ pub async fn subscribe<T>(
                 if let audio_client::zlink::Error::Io(ref why) = why
                     && why.kind() == std::io::ErrorKind::NotFound
                 {
-                    tracing::error!("cosmic-settings-daemon varlink service not found.");
+                    tracing::error!("wmde-settings-daemon varlink service not found.");
                 } else {
                     tracing::error!(
                         ?why,
-                        "failed to connect to cosmic-settings's varlink service"
+                        "failed to connect to wmde-settings-daemon's varlink service"
                     );
                 }
 
@@ -51,7 +51,7 @@ pub async fn subscribe<T>(
 
 #[derive(Clone, Debug)]
 pub enum Message {
-    /// Connection to `com.system76.CosmicSettings`.
+    /// Connection to `fun.wmde.Settings`.
     Client(Arc<audio_client::Client>),
     /// Messages from the varlink audio client,
     Subscription(audio_client::Event),

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Default applications
+Comment=Default web browser, mail client, file browser, and other applications.
+Type=Application
+Exec=wmde-settings default-apps
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;Default;Application
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-default-applications
+StartupNotify=true

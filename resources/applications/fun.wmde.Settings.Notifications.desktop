@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Notifications
+Comment=Do Not Disturb, lockscreen notifications, and per-application settings.
+Type=Application
+Exec=wmde-settings notifications
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;Notification;Lock;
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=fun.wmde.Settings
+StartupNotify=true

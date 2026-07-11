@@ -1293,18 +1293,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmic-bg-config"
-version = "1.0.3"
-source = "git+https://github.com/pop-os/cosmic-bg#b1ca4c180ab29dd185472b777ab0abdb1f96ccaf"
-dependencies = [
- "cosmic-config",
- "derive_setters",
- "image",
- "serde",
- "tracing",
-]
-
-[[package]]
 name = "cosmic-client-toolkit"
 version = "0.1.0"
 source = "git+https://github.com/pop-os/cosmic-protocols//?rev=d0e95be#d0e95be25e423cfe523b11111a3666ed7aaf0dc4"
@@ -1320,7 +1308,6 @@ dependencies = [
 [[package]]
 name = "cosmic-comp-config"
 version = "1.0.0"
-source = "git+https://github.com/pop-os/cosmic-comp#2f7c34f29ae8d1d5b7d147bdb69ae443bd630e98"
 dependencies = [
  "cosmic-config",
  "input",
@@ -1332,7 +1319,6 @@ dependencies = [
 [[package]]
 name = "cosmic-config"
 version = "1.0.0"
-source = "git+https://github.com/pop-os/libcosmic#a991d7bb433f67016c1473e8e4a03691ededd75a"
 dependencies = [
  "atomicwrites",
  "cosmic-config-derive",
@@ -1353,7 +1339,6 @@ dependencies = [
 [[package]]
 name = "cosmic-config-derive"
 version = "1.0.0"
-source = "git+https://github.com/pop-os/libcosmic#a991d7bb433f67016c1473e8e4a03691ededd75a"
 dependencies = [
  "quote",
  "syn 2.0.117",
@@ -1419,7 +1404,6 @@ dependencies = [
 [[package]]
 name = "cosmic-panel-config"
 version = "0.1.0"
-source = "git+https://github.com/pop-os/cosmic-panel#546a6c45210574caed9a3e51446aa8ad622d3627"
 dependencies = [
  "anyhow",
  "cosmic-config",
@@ -1469,94 +1453,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cosmic-settings"
-version = "1.0.12"
-dependencies = [
- "accounts-zbus",
- "anyhow",
- "ashpd 0.12.3",
- "bluez-zbus",
- "chrono",
- "clap",
- "color-eyre",
- "cosmic-bg-config",
- "cosmic-comp-config",
- "cosmic-config",
- "cosmic-dbus-networkmanager",
- "cosmic-idle-config",
- "cosmic-mime-apps",
- "cosmic-panel-config",
- "cosmic-protocols",
- "cosmic-randr",
- "cosmic-randr-shell",
- "cosmic-settings-a11y-manager-subscription",
- "cosmic-settings-accessibility-subscription",
- "cosmic-settings-airplane-mode-subscription",
- "cosmic-settings-audio-client",
- "cosmic-settings-bluetooth-subscription",
- "cosmic-settings-config",
- "cosmic-settings-daemon-config",
- "cosmic-settings-network-manager-subscription",
- "cosmic-settings-page",
- "cosmic-settings-sound",
- "cosmic-settings-upower-subscription",
- "cosmic-settings-wallpaper",
- "derive_setters",
- "dirs",
- "eyre",
- "fontdb",
- "freedesktop-desktop-entry",
- "futures",
- "gettext-rs",
- "hostname-validator",
- "hostname1-zbus",
- "i18n-embed",
- "i18n-embed-fl",
- "iced_winit",
- "icu",
- "image",
- "indexmap 2.14.0",
- "intmap",
- "itertools",
- "itoa",
- "jiff",
- "libcosmic",
- "locale1",
- "locales-rs",
- "mime 0.3.17",
- "nm-secret-agent-manager",
- "notify",
- "num-traits",
- "pwhash",
- "regex",
- "ron 0.12.1",
- "rust-embed",
- "rustix 1.1.4",
- "secure-string",
- "serde",
- "slab",
- "slotmap",
- "smithay-client-toolkit",
- "static_init",
- "sunrise",
- "sysinfo",
- "timedate-zbus",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "udev",
- "upower_dbus",
- "url",
- "which",
- "xdgen",
- "xkb-data",
- "xkeysym",
- "zbus",
- "zbus_polkit",
- "zlink",
-]
-
-[[package]]
 name = "cosmic-settings-a11y-manager-subscription"
 version = "1.0.7"
 dependencies = [
@@ -1595,7 +1491,6 @@ dependencies = [
 [[package]]
 name = "cosmic-settings-audio-client"
 version = "1.0.0"
-source = "git+https://github.com/pop-os/cosmic-settings-daemon#e7936f0d4f01c8c5a436908c7ee9f6ad43e6a7d8"
 dependencies = [
  "cosmic-settings-audio-core",
  "dirs",
@@ -1611,7 +1506,6 @@ dependencies = [
 [[package]]
 name = "cosmic-settings-audio-core"
 version = "1.0.0"
-source = "git+https://github.com/pop-os/cosmic-settings-daemon#e7936f0d4f01c8c5a436908c7ee9f6ad43e6a7d8"
 dependencies = [
  "dirs",
  "ron 0.12.1",
@@ -1634,7 +1528,6 @@ dependencies = [
 [[package]]
 name = "cosmic-settings-config"
 version = "0.1.0"
-source = "git+https://github.com/pop-os/cosmic-settings-daemon#e7936f0d4f01c8c5a436908c7ee9f6ad43e6a7d8"
 dependencies = [
  "cosmic-config",
  "ron 0.11.0",
@@ -1655,7 +1548,6 @@ dependencies = [
 [[package]]
 name = "cosmic-settings-daemon-config"
 version = "0.1.0"
-source = "git+https://github.com/pop-os/cosmic-settings-daemon#e7936f0d4f01c8c5a436908c7ee9f6ad43e6a7d8"
 dependencies = [
  "cosmic-config",
  "serde",
@@ -1732,7 +1624,6 @@ dependencies = [
 name = "cosmic-settings-wallpaper"
 version = "1.0.7"
 dependencies = [
- "cosmic-bg-config",
  "cosmic-randr-shell",
  "dirs",
  "eyre",
@@ -1745,6 +1636,7 @@ dependencies = [
  "tokio",
  "tracing",
  "walkdir",
+ "wmde-bg-config",
 ]
 
 [[package]]
@@ -1774,7 +1666,6 @@ dependencies = [
 [[package]]
 name = "cosmic-theme"
 version = "1.0.0"
-source = "git+https://github.com/pop-os/libcosmic#f0f68933f1552857e2165fc0fa953228107bddef"
 dependencies = [
  "almost",
  "configparser",
@@ -3158,7 +3049,6 @@ dependencies = [
 [[package]]
 name = "iced"
 version = "0.14.0"
-source = "git+https://github.com/pop-os/libcosmic#f0f68933f1552857e2165fc0fa953228107bddef"
 dependencies = [
  "dnd",
  "iced_accessibility",
@@ -3179,7 +3069,6 @@ dependencies = [
 [[package]]
 name = "iced_accessibility"
 version = "0.1.0"
-source = "git+https://github.com/pop-os/libcosmic#a991d7bb433f67016c1473e8e4a03691ededd75a"
 dependencies = [
  "accesskit",
  "accesskit_winit",
@@ -3188,7 +3077,6 @@ dependencies = [
 [[package]]
 name = "iced_core"
 version = "0.14.0"
-source = "git+https://github.com/pop-os/libcosmic#a991d7bb433f67016c1473e8e4a03691ededd75a"
 dependencies = [
  "bitflags 2.12.1",
  "bytes",
@@ -3214,7 +3102,6 @@ dependencies = [
 [[package]]
 name = "iced_debug"
 version = "0.14.0"
-source = "git+https://github.com/pop-os/libcosmic#f0f68933f1552857e2165fc0fa953228107bddef"
 dependencies = [
  "iced_core",
  "iced_futures",
@@ -3224,7 +3111,6 @@ dependencies = [
 [[package]]
 name = "iced_futures"
 version = "0.14.0"
-source = "git+https://github.com/pop-os/libcosmic#a991d7bb433f67016c1473e8e4a03691ededd75a"
 dependencies = [
  "futures",
  "iced_core",
@@ -3238,7 +3124,6 @@ dependencies = [
 [[package]]
 name = "iced_graphics"
 version = "0.14.0"
-source = "git+https://github.com/pop-os/libcosmic#f0f68933f1552857e2165fc0fa953228107bddef"
 dependencies = [
  "bitflags 2.12.1",
  "bytemuck",
@@ -3259,7 +3144,6 @@ dependencies = [
 [[package]]
 name = "iced_program"
 version = "0.14.0"
-source = "git+https://github.com/pop-os/libcosmic#f0f68933f1552857e2165fc0fa953228107bddef"
 dependencies = [
  "iced_graphics",
  "iced_runtime",
@@ -3268,7 +3152,6 @@ dependencies = [
 [[package]]
 name = "iced_renderer"
 version = "0.14.0"
-source = "git+https://github.com/pop-os/libcosmic#f0f68933f1552857e2165fc0fa953228107bddef"
 dependencies = [
  "iced_graphics",
  "iced_tiny_skia",
@@ -3280,7 +3163,6 @@ dependencies = [
 [[package]]
 name = "iced_runtime"
 version = "0.14.0"
-source = "git+https://github.com/pop-os/libcosmic#f0f68933f1552857e2165fc0fa953228107bddef"
 dependencies = [
  "bytes",
  "cosmic-client-toolkit",
@@ -3296,7 +3178,6 @@ dependencies = [
 [[package]]
 name = "iced_tiny_skia"
 version = "0.14.0"
-source = "git+https://github.com/pop-os/libcosmic#f0f68933f1552857e2165fc0fa953228107bddef"
 dependencies = [
  "bytemuck",
  "cosmic-text",
@@ -3313,7 +3194,6 @@ dependencies = [
 [[package]]
 name = "iced_wgpu"
 version = "0.14.0"
-source = "git+https://github.com/pop-os/libcosmic#f0f68933f1552857e2165fc0fa953228107bddef"
 dependencies = [
  "as-raw-xcb-connection",
  "bitflags 2.12.1",
@@ -3344,7 +3224,6 @@ dependencies = [
 [[package]]
 name = "iced_widget"
 version = "0.14.2"
-source = "git+https://github.com/pop-os/libcosmic#f0f68933f1552857e2165fc0fa953228107bddef"
 dependencies = [
  "cosmic-client-toolkit",
  "dnd",
@@ -3364,7 +3243,6 @@ dependencies = [
 [[package]]
 name = "iced_winit"
 version = "0.14.0"
-source = "git+https://github.com/pop-os/libcosmic#f0f68933f1552857e2165fc0fa953228107bddef"
 dependencies = [
  "cosmic-client-toolkit",
  "cursor-icon",
@@ -4455,7 +4333,6 @@ checksum = "68ab91017fe16c622486840e4c83c9a37afeff978bd239b5293d61ece587de66"
 [[package]]
 name = "libcosmic"
 version = "1.0.0"
-source = "git+https://github.com/pop-os/libcosmic#f0f68933f1552857e2165fc0fa953228107bddef"
 dependencies = [
  "apply",
  "ashpd 0.12.3",
@@ -8741,6 +8618,105 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
 
 [[package]]
+name = "wmde-bg-config"
+version = "1.0.3"
+dependencies = [
+ "cosmic-config",
+ "derive_setters",
+ "image",
+ "serde",
+ "tracing",
+]
+
+[[package]]
+name = "wmde-settings"
+version = "1.0.12"
+dependencies = [
+ "accounts-zbus",
+ "anyhow",
+ "ashpd 0.12.3",
+ "bluez-zbus",
+ "chrono",
+ "clap",
+ "color-eyre",
+ "cosmic-comp-config",
+ "cosmic-config",
+ "cosmic-dbus-networkmanager",
+ "cosmic-idle-config",
+ "cosmic-mime-apps",
+ "cosmic-panel-config",
+ "cosmic-protocols",
+ "cosmic-randr",
+ "cosmic-randr-shell",
+ "cosmic-settings-a11y-manager-subscription",
+ "cosmic-settings-accessibility-subscription",
+ "cosmic-settings-airplane-mode-subscription",
+ "cosmic-settings-audio-client",
+ "cosmic-settings-bluetooth-subscription",
+ "cosmic-settings-config",
+ "cosmic-settings-daemon-config",
+ "cosmic-settings-network-manager-subscription",
+ "cosmic-settings-page",
+ "cosmic-settings-sound",
+ "cosmic-settings-upower-subscription",
+ "cosmic-settings-wallpaper",
+ "derive_setters",
+ "dirs",
+ "eyre",
+ "fontdb",
+ "freedesktop-desktop-entry",
+ "futures",
+ "gettext-rs",
+ "hostname-validator",
+ "hostname1-zbus",
+ "i18n-embed",
+ "i18n-embed-fl",
+ "iced_winit",
+ "icu",
+ "image",
+ "indexmap 2.14.0",
+ "intmap",
+ "itertools",
+ "itoa",
+ "jiff",
+ "libcosmic",
+ "locale1",
+ "locales-rs",
+ "mime 0.3.17",
+ "nm-secret-agent-manager",
+ "notify",
+ "num-traits",
+ "pwhash",
+ "regex",
+ "ron 0.12.1",
+ "rust-embed",
+ "rustix 1.1.4",
+ "secure-string",
+ "serde",
+ "slab",
+ "slotmap",
+ "smithay-client-toolkit",
+ "static_init",
+ "sunrise",
+ "sysinfo",
+ "timedate-zbus",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "udev",
+ "upower_dbus",
+ "url",
+ "which",
+ "wmde-bg-config",
+ "xdgen",
+ "xkb-data",
+ "xkeysym",
+ "zbus",
+ "zbus_polkit",
+ "zlink",
+]
+
+[[package]]
 name = "write16"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8803,7 +8779,6 @@ checksum = "2fb433233f2df9344722454bc7e96465c9d03bff9d77c248f9e7523fe79585b5"
 [[package]]
 name = "xdg-shell-wrapper-config"
 version = "0.1.0"
-source = "git+https://github.com/pop-os/cosmic-panel#546a6c45210574caed9a3e51446aa8ad622d3627"
 dependencies = [
  "serde",
  "wayland-protocols-wlr",

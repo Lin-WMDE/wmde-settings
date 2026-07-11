@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Panel
+Comment=Primary system bar for menus and applets.
+Type=Application
+Exec=wmde-settings panel
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;Panel;Applet
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-panel
+StartupNotify=true

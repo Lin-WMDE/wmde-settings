@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Mouse
+Comment=Mouse speed, acceleration, and natural scrolling.
+Type=Application
+Exec=wmde-settings mouse
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;Mouse;Acceleration;Scrolling;
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-mouse
+StartupNotify=true

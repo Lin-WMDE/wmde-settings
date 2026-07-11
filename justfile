@@ -1,11 +1,11 @@
-name := 'cosmic-settings'
-appid := 'com.system76.CosmicSettings'
+name := 'wmde-settings'
+appid := 'fun.wmde.Settings'
 rootdir := ''
 prefix := '/usr'
 
 usrdir := absolute_path(clean(rootdir / prefix))
 appdir := usrdir / 'share' / 'applications'
-default-schema-target := usrdir / 'share' / 'cosmic'
+default-schema-target := usrdir / 'share' / 'wmde'
 iconsdir := usrdir / 'share' / 'icons' / 'hicolor'
 
 # Installation target paths
@@ -13,7 +13,7 @@ bin-dst := usrdir / 'bin' / name
 metainfo-dst := usrdir / 'share' / 'metainfo' / appid + '.metainfo.xml'
 polkit-actions-dst := usrdir / 'share' / 'polkit-1' / 'actions'
 policy-users-dst := polkit-actions-dst / appid + '.Users.policy'
-polkit-rules-dst := usrdir / 'share' / 'polkit-1' / 'rules.d' / 'cosmic-settings.rules'
+polkit-rules-dst := usrdir / 'share' / 'polkit-1' / 'rules.d' / 'wmde-settings.rules'
 
 import 'cargo.just'
 
@@ -28,7 +28,7 @@ build-deb:
 # Install everything
 install:
     install -Dm0644 {{'resources' / appid + '.metainfo.xml'}} {{metainfo-dst}}
-    install -Dm0644 {{'resources' / 'polkit-1' / 'rules.d' / 'cosmic-settings.rules'}} {{polkit-rules-dst}}
+    install -Dm0644 {{'resources' / 'polkit-1' / 'rules.d' / 'wmde-settings.rules'}} {{polkit-rules-dst}}
     install -Dm0644 {{'resources' / 'polkit-1' / 'actions' / appid + '.Users.policy'}} {{policy-users-dst}}
     install -Dm0755 {{cargo-target-dir / 'release' / name}} {{bin-dst}}
     cd target/xdgen && find * -type f -exec install -Dm0644 '{}' '{{appdir}}/{}' \;
@@ -45,10 +45,10 @@ uninstall:
 heaptrack *args:
     #!/usr/bin/env bash
     set -ex
-    rm -fv heaptrack.cosmic-settings.*
-    cargo heaptrack --profile release-with-debug --bin cosmic-settings -- {{args}}
-    zstd -dc < heaptrack.cosmic-settings.*.raw.zst + /usr/lib/heaptrack/libexec/heaptrack_env | zstd -c > heaptrack_env.cosmic-settings.zst
-    heaptrack_gui heaptrack.cosmic-settings.zst
+    rm -fv heaptrack.wmde-settings.*
+    cargo heaptrack --profile release-with-debug --bin wmde-settings -- {{args}}
+    zstd -dc < heaptrack.wmde-settings.*.raw.zst + /usr/lib/heaptrack/libexec/heaptrack_env | zstd -c > heaptrack_env.wmde-settings.zst
+    heaptrack_gui heaptrack.wmde-settings.zst
 
 check-features:
     #!/usr/bin/env bash

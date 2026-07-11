@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Window management
+Comment=Super key action, window control options, and additional window tiling options.
+Type=Application
+Exec=wmde-settings window-management
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;Window;Management;Tiling;Super;Key;
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-window-management
+StartupNotify=true

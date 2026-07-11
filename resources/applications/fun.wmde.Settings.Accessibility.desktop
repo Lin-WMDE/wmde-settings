@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Accessibility
+Comment=Screen reader, magnifier, high contrast, and color filters.
+Type=Application
+Exec=wmde-settings accessibility
+Terminal=false
+Categories=WMDE
+Keywords=WMDE;Accessibility;A11y;Screen;Reader;Magnifier;Contrast;Color;
+NoDisplay=true
+OnlyShowIn=WMDE
+Icon=preferences-desktop-accessibility
+StartupNotify=true

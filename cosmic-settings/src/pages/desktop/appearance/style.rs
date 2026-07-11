@@ -15,16 +15,16 @@ pub fn section() -> Section<crate::pages::Message> {
         square = fl!("style", "square");
     });
 
-    let dark_round_style = from_name("illustration-appearance-dark-style-round").handle();
-    let light_round_style = from_name("illustration-appearance-light-style-round").handle();
+    let dark_round_style = from_name("wmde-illustration-appearance-dark-style-round").handle();
+    let light_round_style = from_name("wmde-illustration-appearance-light-style-round").handle();
 
     let dark_slightly_round_style =
-        from_name("illustration-appearance-dark-style-slightly-round").handle();
+        from_name("wmde-illustration-appearance-dark-style-slightly-round").handle();
     let light_slightly_round_style =
-        from_name("illustration-appearance-light-style-slightly-round").handle();
+        from_name("wmde-illustration-appearance-light-style-slightly-round").handle();
 
-    let dark_square_style = from_name("illustration-appearance-dark-style-square").handle();
-    let light_square_style = from_name("illustration-appearance-light-style-square").handle();
+    let dark_square_style = from_name("wmde-illustration-appearance-dark-style-square").handle();
+    let light_square_style = from_name("wmde-illustration-appearance-light-style-square").handle();
 
     fn style_container() -> cosmic::theme::Container<'static> {
         cosmic::theme::Container::custom(|theme| {

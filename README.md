@@ -11,7 +11,7 @@ Translations must go through Weblate at https://hosted.weblate.org/projects/pop-
 We will accept pull requests for distro-specific features and pages.
 Make them compile conditionally with a [cargo feature][cargo-feature].
 
-The accent palettes on the Appearance settings page are configurable through the cosmic-config directory at `/usr/share/cosmic/com.system76.CosmicSettings/v1/`. One at `accent_palette_dark`, and another at `accent_palette_light`. Examples can be found at [resources/accent_palette_dark.ron](./resources/accent_palette_dark.ron) and [resources/accent_palette_light.ron](./resources/accent_palette_light.ron). This can be copied locally to `~/.config/cosmic/com.system76.CosmicSettings/v1/` for testing, and then move to `/usr/share/cosmic` for packaging.
+The accent palettes on the Appearance settings page are configurable through the cosmic-config directory at `/usr/share/wmde/fun.wmde.Settings/v1/`. One at `accent_palette_dark`, and another at `accent_palette_light`. Examples can be found at [resources/accent_palette_dark.ron](./resources/accent_palette_dark.ron) and [resources/accent_palette_light.ron](./resources/accent_palette_light.ron). This can be copied locally to `~/.config/wmde/fun.wmde.Settings/v1/` for testing, and then move to `/usr/share/wmde` for packaging.
 
 ## Build
 

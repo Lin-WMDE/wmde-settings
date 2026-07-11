@@ -18,7 +18,7 @@ use cosmic_settings_sound::model;
 use futures::executor::block_on;
 use slotmap::SlotMap;
 
-const AUDIO_CONFIG: &str = "com.system76.CosmicAudio";
+const AUDIO_CONFIG: &str = "fun.wmde.Audio";
 const AMPLIFICATION_SINK: &str = "amplification_sink";
 const AMPLIFICATION_SOURCE: &str = "amplification_source";
 
