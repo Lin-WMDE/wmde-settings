@@ -74,7 +74,7 @@ impl From<(Option<Config>, Option<Config>, Option<Vec<Srgba>>)> for ThemeCustomi
             .success(theme.success.base.color)
             .warning(theme.warning.base.color)
             .neutral_tint(theme.palette.neutral_5.color)
-            .text_tint(theme.background.on.color);
+            .text_tint(theme.background(false).on.color);
 
         theme_builder.gaps = theme.gaps;
 
@@ -174,6 +174,23 @@ impl Manager {
             }
         }
 
+        // libcosmic v2 made `background`, `primary` and `secondary` private fields
+        // exposed via accessor methods taking a `transparent` flag; pass `false`
+        // to read/write the opaque container (matches the stored config key).
+        macro_rules! theme_transaction_fn {
+            ($config:ident, $current_theme:ident, $new_theme:ident, { $($name:ident;)+ }) => {
+                let tx = $config.transaction();
+
+                $(
+                    if $current_theme.$name(false) != $new_theme.$name(false) {
+                        _ = tx.set(stringify!($name), $new_theme.$name(false).clone());
+                    }
+                )+
+
+                _ = tx.commit();
+            }
+        }
+
         let map_data_fn = |customizer: &ThemeCustomizer| {
             (customizer.builder.0.clone(), customizer.theme.1.clone())
         };
@@ -208,15 +225,12 @@ impl Manager {
                     theme_transaction!(config, current_theme, new_theme, {
                         accent;
                         accent_button;
-                        background;
                         button;
                         destructive;
                         destructive_button;
                         link_button;
                         icon_button;
                         palette;
-                        primary;
-                        secondary;
                         shade;
                         success;
                         text_button;
@@ -224,6 +238,11 @@ impl Manager {
                         warning_button;
                         window_hint;
                         accent_text;
+                    });
+                    theme_transaction_fn!(config, current_theme, new_theme, {
+                        background;
+                        primary;
+                        secondary;
                     });
                 }
             }
