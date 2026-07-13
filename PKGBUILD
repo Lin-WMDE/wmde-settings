@@ -8,7 +8,7 @@
 # alongside cosmic-settings with no shared paths, so NO conflicts/replaces cosmic-*.
 pkgname=wmde-settings
 pkgver=1.0.12
-pkgrel=2
+pkgrel=3
 pkgdesc="WMDE settings application (fork of cosmic-settings) - fun.wmde.Settings"
 arch=('x86_64')
 url="https://wmde.fun"
