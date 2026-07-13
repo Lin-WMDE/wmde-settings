@@ -6,7 +6,7 @@ number = { $number }
 
 ## Freedesktop desktop entries
 
-app = COSMIC Settings
+app = WMDE Settings
 xdg-entry-comment = Settings application for the COSMIC desktop
 xdg-entry-keywords = COSMIC;Settings;
 
