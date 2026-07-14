@@ -3,6 +3,7 @@ target
 vendor
 vendor.tar
 .cargo
+*.pkg.tar.zst
 debian/*
 !debian/changelog
 !debian/control
