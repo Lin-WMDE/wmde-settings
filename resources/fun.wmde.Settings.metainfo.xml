@@ -4,8 +4,7 @@
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
   <project_group>WMDE</project_group>
-  <developer_name>System76</developer_name>
-  <update_contact>jeremy@system76.com</update_contact>
+  <developer_name>WMDE</developer_name>
   <url type="homepage">https://github.com/Lin-WMDE/wmde-settings</url>
   <url type="bugtracker">https://github.com/Lin-WMDE/wmde-settings</url>
   <name>WMDE Settings</name>

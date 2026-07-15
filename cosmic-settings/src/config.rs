@@ -10,6 +10,11 @@ const ACTIVE_PAGE: &str = "active_page";
 const ACCENT_PALETTE_DARK: &str = "accent_palette_dark";
 const ACCENT_PALETTE_LIGHT: &str = "accent_palette_light";
 
+/// Compositor (wmde-comp) config id, shared by every page that reads it.
+/// Single source of truth so a future rebrand is one edit, not nine.
+pub const COSMIC_COMP_CONFIG: &str = "fun.wmde.Comp";
+pub const COSMIC_COMP_CONFIG_VERSION: u64 = 1;
+
 #[must_use]
 #[derive(Debug, Clone)]
 pub struct Config {

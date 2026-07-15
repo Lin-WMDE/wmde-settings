@@ -1,4 +1,4 @@
-app = Setări COSMIC
+app = Setări WMDE
 dbus-connection-error = Nu s-a putut conecta la DBus
 ok = OK
 unknown = Necunoscut
@@ -217,7 +217,7 @@ control-tint = Nuanță pentru componentele de control
 frosted = Efect de sticlă mată pentru interfața sistemului
     .desc = Aplică estompare de fundal panoului, dock-ului, applet-urilor, lansatorului și bibliotecii de aplicații.
 enable-export = Aplică această temă aplicațiilor GNOME
-    .desc = Nu toate toolkit-urile suportă comutarea automată. Aplicațiile non-COSMIC pot necesita o repornire după schimbarea temei.
+    .desc = Nu toate toolkit-urile suportă comutarea automată. Aplicațiile non-WMDE pot necesita o repornire după schimbarea temei.
 icon-theme = Temă de pictograme
     .desc = Aplică un set diferit de pictograme aplicațiilor.
 text-tint = Nuanță a textului interfeței

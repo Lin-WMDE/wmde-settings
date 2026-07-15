@@ -355,7 +355,7 @@ impl cosmic::Application for SettingsApp {
             page.subscription(self.core()).map(Message::PageMessage),
             #[cfg(feature = "cosmic-comp-config")]
             self.core()
-                .watch_config::<CosmicCompConfig>("fun.wmde.Comp")
+                .watch_config::<CosmicCompConfig>(crate::config::COSMIC_COMP_CONFIG)
                 .map(|update| {
                     for why in update.errors {
                         tracing::error!(?why, "comp config load error");

@@ -1,3 +1,3 @@
 connect = התחברות
-app = הגדרות COSMIC
+app = הגדרות WMDE
 number = { $number }

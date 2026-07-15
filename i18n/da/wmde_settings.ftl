@@ -1,4 +1,4 @@
-app = COSMIC Indstillinger
+app = WMDE Indstillinger
 dbus-connection-error = Kunne ikke oprette forbindelse til DBus
 ok = OK
 unknown = Ukendt
@@ -225,7 +225,7 @@ control-tint = Kontrolkomponent toning
 frosted = Frosted glass effect on system interface
     .desc = Anvender baggrundssløring på panel, dock, applets, launcher og applikationsbibliotek.
 enable-export = Anvend dette tema til GNOME apps.
-    .desc = Ikke alle værktøjssæt understøtter automatisk skift. Ikke-COSMIC apps skal muligvis genstartes efter et temaskift.
+    .desc = Ikke alle værktøjssæt understøtter automatisk skift. Ikke-WMDE apps skal muligvis genstartes efter et temaskift.
 icon-theme = Ikon tema
     .desc = Anvender et andet sæt ikoner til applikationer.
 text-tint = Interface text tint

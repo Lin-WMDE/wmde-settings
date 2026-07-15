@@ -140,9 +140,6 @@ const KB_REPEAT_DELAY_MIN: u32 = 200;
 const KB_REPEAT_RATE_MAX: u32 = 45;
 const KB_REPEAT_RATE_MIN: u32 = 5;
 
-const COSMIC_COMP_CONFIG: &str = "fun.wmde.Comp";
-const COSMIC_COMP_CONFIG_VERSION: u64 = 1;
-
 pub struct Page {
     entity: page::Entity,
     config: cosmic_config::Config,
@@ -159,7 +156,11 @@ pub struct Page {
 impl Default for Page {
     fn default() -> Self {
         let config =
-            cosmic_config::Config::new(COSMIC_COMP_CONFIG, COSMIC_COMP_CONFIG_VERSION).unwrap();
+            cosmic_config::Config::new(
+                crate::config::COSMIC_COMP_CONFIG,
+                crate::config::COSMIC_COMP_CONFIG_VERSION,
+            )
+            .unwrap();
 
         Self {
             entity: page::Entity::null(),

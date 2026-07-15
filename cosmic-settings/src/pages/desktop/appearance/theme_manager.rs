@@ -160,34 +160,36 @@ impl Default for Manager {
 
 impl Manager {
     pub fn build_theme(&mut self, stage: ThemeStaged) -> Task<app::Message> {
+        // Stage direct-field theme keys onto a shared transaction (committed by the caller).
         macro_rules! theme_transaction {
-            ($config:ident, $current_theme:ident, $new_theme:ident, { $($name:ident;)+ }) => {
-                let tx = $config.transaction();
-
+            ($tx:ident, $current_theme:ident, $new_theme:ident, { $($name:ident;)+ }) => {
                 $(
                     if $current_theme.$name != $new_theme.$name {
-                        _ = tx.set(stringify!($name), $new_theme.$name.clone());
+                        _ = $tx.set(stringify!($name), $new_theme.$name.clone());
                     }
                 )+
-
-                _ = tx.commit();
             }
         }
 
         // libcosmic v2 made `background`, `primary` and `secondary` private fields
-        // exposed via accessor methods taking a `transparent` flag; pass `false`
-        // to read/write the opaque container (matches the stored config key).
+        // exposed via accessor methods taking a `transparent` flag. Persist BOTH the
+        // opaque key ($name, transparent=false) and the transparent key
+        // (transparent_$name, transparent=true); the latter drives frosted panels,
+        // applets and surfaces. Upstream writes both; omitting the transparent keys
+        // leaves frosted surfaces on the default theme (theme only half-applies).
         macro_rules! theme_transaction_fn {
-            ($config:ident, $current_theme:ident, $new_theme:ident, { $($name:ident;)+ }) => {
-                let tx = $config.transaction();
-
+            ($tx:ident, $current_theme:ident, $new_theme:ident, { $($name:ident;)+ }) => {
                 $(
                     if $current_theme.$name(false) != $new_theme.$name(false) {
-                        _ = tx.set(stringify!($name), $new_theme.$name(false).clone());
+                        _ = $tx.set(stringify!($name), $new_theme.$name(false).clone());
+                    }
+                    if $current_theme.$name(true) != $new_theme.$name(true) {
+                        _ = $tx.set(
+                            concat!("transparent_", stringify!($name)),
+                            $new_theme.$name(true).clone(),
+                        );
                     }
                 )+
-
-                _ = tx.commit();
             }
         }
 
@@ -222,7 +224,8 @@ impl Manager {
                     };
 
                     let new_theme = builder.build();
-                    theme_transaction!(config, current_theme, new_theme, {
+                    let tx = config.transaction();
+                    theme_transaction!(tx, current_theme, new_theme, {
                         accent;
                         accent_button;
                         button;
@@ -239,11 +242,12 @@ impl Manager {
                         window_hint;
                         accent_text;
                     });
-                    theme_transaction_fn!(config, current_theme, new_theme, {
+                    theme_transaction_fn!(tx, current_theme, new_theme, {
                         background;
                         primary;
                         secondary;
                     });
+                    _ = tx.commit();
                 }
             }
 

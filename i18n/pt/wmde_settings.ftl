@@ -1,4 +1,4 @@
-app = Definições COSMIC
+app = Definições WMDE
 unknown = Desconhecido
 number = { $number }
 
@@ -109,7 +109,7 @@ x-hours =
 ## Desktop: Appearance
 
 appearance = Aparência
-    .desc = Cores de destaque e temas COSMIC.
+    .desc = Cores de destaque e temas WMDE.
 accent-color = Cor de destaque
 app-background = Fundo da aplicação ou janela
 auto = Automático
@@ -143,7 +143,7 @@ frosted = Efeito de vidro fosco na interface do sistema
     .desc = Aplica uma desfocagem de fundo ao painel, à doca, aos miniaplicativos, ao lançador e à biblioteca de aplicações.
 experimental-settings = Definições experimentais
 enable-export = Aplicar este tema a aplicações GNOME.
-    .desc = Nem todos os toolkits suportam a troca automática. As aplicações não-COSMIC poderão ter de ser reiniciadas após uma mudança de tema.
+    .desc = Nem todos os toolkits suportam a troca automática. As aplicações não-WMDE poderão ter de ser reiniciadas após uma mudança de tema.
 icon-theme = Tema de ícones
     .desc = Aplica um conjunto diferente de ícones às aplicações.
 text-tint = Tonalidade do texto da interface
@@ -850,10 +850,10 @@ invalid-username = Nome de utilizador inválido.
 password-mismatch = A palavra-passe e a confirmação devem ser iguais.
 save = Guardar
 xdg-entry-desktop-comment = Papel de parede, aparência, painel, doca, gestão de janelas e definições de áreas de trabalho
-xdg-entry-workspaces-keywords = COSMIC;Área;Trabalho;Orientação;Visão;Geral;Monitor;Ecrã;
+xdg-entry-workspaces-keywords = WMDE;Área;Trabalho;Orientação;Visão;Geral;Monitor;Ecrã;
 workspaces-overview = Visão geral das áreas de trabalho
     .action-on-typing = Ação ao digitar
     .none = Nenhuma
     .launcher = Abrir lançador
     .applications = Abrir aplicações
-xdg-entry-power-keywords = COSMIC;Energia;Bateria
+xdg-entry-power-keywords = WMDE;Energia;Bateria

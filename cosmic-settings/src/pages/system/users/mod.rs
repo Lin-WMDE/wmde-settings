@@ -85,7 +85,9 @@ impl Default for Page {
             users: Vec::default(),
             selected_user_idx: None,
             dialog: None,
-            default_icon: icon::from_path(PathBuf::from(DEFAULT_ICON_FILE)),
+            // WMDE: themed generic avatar (bundled in wmde-icons); always renders even when
+            // no per-user icon file exists, unlike the old hardcoded Pop asset path.
+            default_icon: icon::from_name("avatar-default").handle(),
             password_label: crate::fl!("password"),
             password_confirm_label: crate::fl!("password-confirm"),
             username_label: crate::fl!("username"),

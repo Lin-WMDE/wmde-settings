@@ -4,8 +4,8 @@
  "http://www.freedesktop.org/standards/PolicyKit/1.0/policyconfig.dtd">
 
 <policyconfig>
-  <vendor>System76</vendor>
-  <vendor_url>https://system76.com/</vendor_url>
+  <vendor>WMDE</vendor>
+  <vendor_url>https://wmde.fun</vendor_url>
 
   <action id="fun.wmde.Settings.Users.Admin">
     <description>Manage user accounts</description>
