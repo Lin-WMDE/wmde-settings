@@ -786,6 +786,8 @@ nav-shortcuts = Navigation
     .last-workspace = Focus last workspace
     .prev-workspace = Focus previous workspace
     .next-workspace = Focus next workspace
+    .next-window = Focus next window
+    .prev-window = Focus previous window
     .focus = Focus window { $direction ->
         *[down] down
         [in] in

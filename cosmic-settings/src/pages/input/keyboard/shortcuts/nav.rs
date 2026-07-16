@@ -100,6 +100,8 @@ pub const fn actions() -> &'static [Action] {
         Action::Focus(FocusDirection::Down),
         Action::Focus(FocusDirection::In),
         Action::Focus(FocusDirection::Out),
+        Action::NextWindow,
+        Action::PrevWindow,
         Action::PreviousWorkspace,
         Action::NextWorkspace,
         Action::LastWorkspace,
