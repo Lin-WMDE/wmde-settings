@@ -1446,7 +1446,6 @@ dependencies = [
 [[package]]
 name = "cosmic-randr"
 version = "0.1.0"
-source = "git+https://github.com/pop-os/cosmic-randr#6e8e795970fa06d434af22775e415b517f7552d3"
 dependencies = [
  "cosmic-protocols",
  "indexmap 2.14.0",
@@ -1460,7 +1459,6 @@ dependencies = [
 [[package]]
 name = "cosmic-randr-shell"
 version = "0.1.0"
-source = "git+https://github.com/pop-os/cosmic-randr#6e8e795970fa06d434af22775e415b517f7552d3"
 dependencies = [
  "kdl",
  "slotmap",
