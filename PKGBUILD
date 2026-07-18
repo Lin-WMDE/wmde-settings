@@ -16,10 +16,10 @@ license=('GPL-3.0-only')
 # Runtime: wayland client, xkbcommon, udev (display page), pipewire + libpulse
 # (sound page audio client), fontconfig/expat (font handling). Verify with namcap.
 depends=('glibc' 'gcc-libs' 'wayland' 'libxkbcommon' 'libinput' 'udev'
-         'pipewire' 'libpulse' 'fontconfig' 'expat')
+         'pipewire' 'libpulse' 'fontconfig' 'expat' 'dav1d')
 # Sibling WMDE forks consumed as local path/patch crates at build time; runtime
 # integration (daemon, panel, comp) is provided by their own packages.
-makedepends=('rust' 'cargo' 'just' 'git' 'clang' 'lld' 'pkgconf'
+makedepends=('rust' 'cargo' 'just' 'git' 'clang' 'lld' 'pkgconf' 'dav1d'
              'wmde-comp' 'wmde-panel' 'wmde-settings-daemon' 'wmde-bg')
 source=("$pkgname::git+https://github.com/Lin-WMDE/wmde-settings.git#branch=wmde")
 sha256sums=('SKIP')
