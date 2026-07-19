@@ -5,6 +5,10 @@ use xdgen::{App, Context, FluentString};
 fn main() {
     let ctx = Context::new("../i18n", env::var("CARGO_PKG_NAME").unwrap()).unwrap();
 
+    // WMDE: wipe the generated-launcher output dir so pages removed from the list
+    // below don't leave stale .desktop files behind (the install step globs this dir).
+    let _ = fs::remove_dir_all("../target/xdgen");
+
     [
         (
             "fun.wmde.Settings",
@@ -65,12 +69,6 @@ fn main() {
             "xdg-entry-displays",
             "xdg-entry-displays-comment",
             "xdg-entry-displays-keywords",
-        ),
-        (
-            "fun.wmde.Settings.Dock",
-            "xdg-entry-dock",
-            "xdg-entry-dock-comment",
-            "xdg-entry-dock-keywords",
         ),
         (
             "fun.wmde.Settings.Input",
