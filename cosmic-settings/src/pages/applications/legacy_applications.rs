@@ -200,7 +200,7 @@ impl Page {
             }
             Message::RandrResult(result) => {
                 if let Some(Err(why)) = Arc::into_inner(result) {
-                    tracing::error!(why = why.to_string(), "cosmic-randr error");
+                    tracing::error!(why = why.to_string(), "wmde-randr error");
                 }
             }
             Message::SetXwaylandDescaling(descale) => {
@@ -231,7 +231,7 @@ impl Page {
                 }
             }
             Message::SetXwaylandPrimaryOutput(idx) => {
-                let mut task = tokio::process::Command::new("cosmic-randr");
+                let mut task = tokio::process::Command::new("wmde-randr");
                 task.arg("xwayland");
                 if idx == 0 {
                     task.arg("--no-primary");

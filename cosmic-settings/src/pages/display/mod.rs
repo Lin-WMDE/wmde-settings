@@ -105,7 +105,7 @@ pub enum Message {
     AdjustScale(u32),
     /// Refreshes display outputs.
     Update {
-        /// Available outputs from cosmic-randr.
+        /// Available outputs from wmde-randr.
         randr: Arc<Result<List, cosmic_randr_shell::Error>>,
     },
     Surface(surface::Action),
@@ -483,7 +483,7 @@ impl Page {
         match message {
             Message::RandrResult(result) => {
                 if let Some(Err(why)) = Arc::into_inner(result) {
-                    tracing::error!(why = why.to_string(), "cosmic-randr error");
+                    tracing::error!(why = why.to_string(), "wmde-randr error");
                     // Cancel the revert dialog if resolution or refresh rate did not change.
                     // RandR may revert those changes in certain circumstances so showing the
                     // dialog is superfluous and confusing.
@@ -1070,7 +1070,7 @@ impl Page {
         Task::batch(tasks)
     }
 
-    /// Applies a display configuration via `cosmic-randr`.
+    /// Applies a display configuration via `wmde-randr`.
     fn exec_randr(&self, output: &Output, request: Randr) -> Task<app::Message> {
         let mut tasks = Vec::with_capacity(2);
 
@@ -1082,7 +1082,7 @@ impl Page {
         }
 
         let name = &*output.name;
-        let mut task = tokio::process::Command::new("cosmic-randr");
+        let mut task = tokio::process::Command::new("wmde-randr");
 
         match request {
             Randr::Mirror(from_id) => {
