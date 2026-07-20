@@ -41,7 +41,9 @@ impl page::AutoBind<crate::pages::Message> for Page {
         #[cfg(feature = "wayland")]
         {
             page = page.sub_page::<panel::Page>();
-            page = page.sub_page::<dock::Page>();
+            // WMDE: no Dock - Windows-10 layout is a single bottom taskbar. The dock
+            // module stays compiled (app.rs handlers reference it) but is not registered
+            // in the Desktop settings nav, so it can't be added or reset from the UI.
         }
 
         #[cfg(feature = "page-window-management")]
