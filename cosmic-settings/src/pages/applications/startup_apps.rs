@@ -499,15 +499,15 @@ fn get_all_apps(locales: Vec<String>) -> Vec<DesktopEntry> {
             continue;
         }
 
-        // skip if we can't run this in COSMIC
+        // skip if we can't run this in WMDE
         if let Some(only_show_in) = entry.only_show_in()
-            && !only_show_in.contains(&"COSMIC")
+            && !only_show_in.contains(&"WMDE")
         {
             continue;
         }
 
         if let Some(not_show_in) = entry.not_show_in()
-            && not_show_in.contains(&"COSMIC")
+            && not_show_in.contains(&"WMDE")
         {
             continue;
         }

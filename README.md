@@ -1,10 +1,17 @@
-# COSMIC Settings
+# WMDE Settings
 
-The settings application for the [COSMIC desktop environment][cosmic-epoch].
+The settings application for the [WMDE desktop](https://wmde.fun).
+
+WMDE Settings is a fork of [pop-os/cosmic-settings][cosmic-settings] by System76, rebranded for
+WMDE. Original authorship and copyright are retained. The crate directory keeps its upstream
+`cosmic-settings` name so that syncing with upstream stays cheap; the installed binary is
+`wmde-settings`.
 
 ## Translators
 
-Translations must go through Weblate at https://hosted.weblate.org/projects/pop-os/cosmic-settings.
+Translations are inherited from upstream, which takes them through Weblate at
+https://hosted.weblate.org/projects/pop-os/cosmic-settings. Fork-specific strings are edited in
+`i18n/` directly.
 
 ## Distributors
 
@@ -21,7 +28,7 @@ See the `Build-Depends` section of the [debian control file](./debian/control).
 
 ### Install
 
-COSMIC uses [just][just] as its preferred build tool.
+WMDE uses [just][just] as its preferred build tool.
 
 ```sh
 just
@@ -35,7 +42,7 @@ If packaging for a Linux distribution, vendor dependencies locally with the `ven
 ```sh
 just vendor
 just build-vendored
-just rootdir=debian/cosmic-settings prefix=/usr install
+just rootdir=debian/wmde-settings prefix=/usr install
 ```
 
 It is recommended to build a source tarball with the vendored dependencies, which can typically be done by running `just vendor` on the host system before it enters the build environment. Reference [debian/rules](./debian/rules) to see how we generate debian packages with `sbuild`.
@@ -44,7 +51,7 @@ It is recommended to build a source tarball with the vendored dependencies, whic
 
 Developers should install [rustup][rustup] and configure their editor to use [rust-analyzer][rust-analyzer]. Run `just check` to ensure that the changes you make are free of linter warnings. You may configure your editor to run `just check-json` as the rust-analyzer check command.
 
-Run the cosmic-settings binary with `just run` so that logs will be emitted to stderr, and crashes will generate detailed backtraces. Applications shouldn't crash, so when writing code, avoid use of `unwrap()` and `expect()`. Instead, log errors with `tracing::error!()` or `tracing::warn!()`.
+Run the wmde-settings binary with `just run` so that logs will be emitted to stderr, and crashes will generate detailed backtraces. Applications shouldn't crash, so when writing code, avoid use of `unwrap()` and `expect()`. Instead, log errors with `tracing::error!()` or `tracing::warn!()`.
 
 To improve compilation times, use Rust >= 1.90.0 and configure [sccache][sccache] for use with Rust.
 
@@ -61,7 +68,7 @@ Any contribution intentionally submitted for inclusion in the work by you shall 
 ```
 
 [cargo-feature]: https://doc.rust-lang.org/cargo/reference/features.html
-[cosmic-epoch]: https://github.com/pop-os/cosmic-epoch
+[cosmic-settings]: https://github.com/pop-os/cosmic-settings
 [just]: https://github.com/casey/just
 [rustup]: https://rustup.rs/
 [rust-analyzer]: https://rust-analyzer.github.io/

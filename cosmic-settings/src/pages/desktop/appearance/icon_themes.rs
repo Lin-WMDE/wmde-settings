@@ -238,7 +238,7 @@ pub async fn fetch() -> Message {
 
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub struct IconTheme {
-    // COSMIC uses the file name of the folder containing the theme
+    // WMDE uses the file name of the folder containing the theme
     pub id: String,
     // GTK uses the name of the theme as specified in its index file
     pub name: String,
