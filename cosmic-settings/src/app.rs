@@ -411,6 +411,13 @@ impl cosmic::Application for SettingsApp {
                         return page.update(message).map(Into::into);
                     }
                 }
+                // WMDE: the Hardware sub-page.
+                #[cfg(feature = "page-about")]
+                crate::pages::Message::Hardware(message) => {
+                    if let Some(page) = self.pages.page_mut::<system::hardware::Page>() {
+                        return page.update(message).map(Into::into);
+                    }
+                }
                 #[cfg(feature = "page-accessibility")]
                 crate::pages::Message::AccessibilityMagnifier(message) => {
                     if let Some(page) = self.pages.page_mut::<accessibility::magnifier::Page>() {
@@ -987,7 +994,10 @@ impl SettingsApp {
             format!(
                 "{} - {}",
                 self.pages.info[self.active_page].title,
-                fl!("app")
+                // Absolute path: `mod app` is declared before `#[macro_use] mod localize`
+                // in main.rs, so the bare macro is not in scope here. Reordering main.rs
+                // would put a local hunk into a file that has none.
+                crate::fl!("app")
             ),
             self.core.main_window_id().unwrap(),
         )

@@ -48,8 +48,7 @@ pub struct Page {
 
 impl Default for Page {
     fn default() -> Self {
-        let cosmic_applet_config =
-            cosmic_config::Config::new("fun.wmde.AppletTime", 1).unwrap();
+        let cosmic_applet_config = cosmic_config::Config::new("fun.wmde.AppletTime", 1).unwrap();
 
         let military_time = cosmic_applet_config
             .get("military_time")

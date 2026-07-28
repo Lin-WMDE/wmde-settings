@@ -47,7 +47,11 @@ pub enum Message {
 
 impl Default for Page {
     fn default() -> Self {
-        let comp_config = cosmic_config::Config::new(crate::config::COSMIC_COMP_CONFIG, crate::config::COSMIC_COMP_CONFIG_VERSION).unwrap();
+        let comp_config = cosmic_config::Config::new(
+            crate::config::COSMIC_COMP_CONFIG,
+            crate::config::COSMIC_COMP_CONFIG_VERSION,
+        )
+        .unwrap();
         let zoom_config: ZoomConfig = comp_config
             .get("accessibility_zoom")
             .inspect_err(|err| {

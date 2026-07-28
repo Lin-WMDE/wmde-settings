@@ -500,7 +500,9 @@ about-device = Назва пристрою
     .desc = Назва, яку бачать інші мережі та пристрої Bluetooth
 about-hardware = Обладнання
     .model = Модель обладнання
+    .motherboard = Материнська плата
     .memory = Памʼять
+    .swap = Підкачка
     .processor = Процесор
     .graphics = Графіка
     .disk-capacity = Місткість диска
@@ -902,3 +904,44 @@ xdg-entry-a11y-comment = Екранний читач, лупа, високий �
 no-search-results = Пошук не дав результатів.
 workspaces-navigation = Навігація
     .wraparound = Перехід між першим і останнім робочим простором сполученнями клавіш і жестами
+
+## WMDE: підсторінка «Обладнання» в категорії «Система і обліковки»
+hardware = Обладнання
+    .desc = Мікропрограма, процесор, накопичувачі, графіка, мережа та підключені пристрої
+
+hardware-none = Нічого не знайдено
+hardware-usage = Зайнято { $used } з { $total } ({ $percent }%)
+
+hardware-state =
+    .enabled = Увімкнено
+    .disabled = Вимкнено
+    .present = Наявний
+    .absent = Відсутній
+    .connected = Підключено
+    .not-applicable = Не застосовується
+    .requires-root = Потрібні права адміністратора
+
+hardware-firmware = Мікропрограма
+    .vendor = Виробник BIOS
+    .version = Версія BIOS
+    .date = Дата BIOS
+    .board = Материнська плата
+    .chassis = Корпус
+    .type = Тип мікропрограми
+    .legacy = Застарілий BIOS
+    .secure-boot = Безпечне завантаження
+    .setup-mode = Режим налаштування
+    .tpm = TPM
+    .microcode = Мікрокод процесора
+
+hardware-processor = Процесор
+    .model = Модель
+    .cores = Ядра / потоки
+    .frequency = Максимальна частота
+
+hardware-storage = Накопичувачі
+hardware-graphics = Графіка та монітори
+hardware-network = Мережеві інтерфейси
+    .virtual-hidden = Віртуальних інтерфейсів приховано
+hardware-usb = Пристрої USB
+hardware-pci = Пристрої PCI

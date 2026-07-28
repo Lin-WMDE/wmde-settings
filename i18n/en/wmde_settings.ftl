@@ -1041,7 +1041,9 @@ about-device = Device name
 
 about-hardware = Hardware
     .model = Hardware model
+    .motherboard = Motherboard
     .memory = Memory
+    .swap = Swap
     .processor = Processor
     .graphics = Graphics
     .disk-capacity = Disk capacity
@@ -1077,3 +1079,44 @@ full-name = Full name
 invalid-username = Invalid username
 password-mismatch = Password and confirmation must match
 save = Save
+
+## WMDE: Hardware sub-page under System & accounts
+hardware = Hardware
+    .desc = Firmware, processor, storage, graphics, network and connected devices
+
+hardware-none = Nothing found
+hardware-usage = { $used } of { $total } used ({ $percent }%)
+
+hardware-state =
+    .enabled = Enabled
+    .disabled = Disabled
+    .present = Present
+    .absent = Absent
+    .connected = Connected
+    .not-applicable = Not applicable
+    .requires-root = Requires root privileges
+
+hardware-firmware = Firmware
+    .vendor = BIOS vendor
+    .version = BIOS version
+    .date = BIOS date
+    .board = Motherboard
+    .chassis = Chassis
+    .type = Firmware type
+    .legacy = Legacy BIOS
+    .secure-boot = Secure Boot
+    .setup-mode = Setup mode
+    .tpm = TPM
+    .microcode = CPU microcode
+
+hardware-processor = Processor
+    .model = Model
+    .cores = Cores / threads
+    .frequency = Maximum frequency
+
+hardware-storage = Storage
+hardware-graphics = Graphics and displays
+hardware-network = Network interfaces
+    .virtual-hidden = Virtual interfaces hidden
+hardware-usb = USB devices
+hardware-pci = PCI devices

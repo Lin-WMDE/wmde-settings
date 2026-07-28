@@ -939,8 +939,7 @@ fn get_default_first_day(locale: &str) -> usize {
 
 fn update_time_settings_after_region_change(region: String) {
     // Create the same config that date.rs uses
-    let cosmic_applet_config = match cosmic_config::Config::new("fun.wmde.AppletTime", 1)
-    {
+    let cosmic_applet_config = match cosmic_config::Config::new("fun.wmde.AppletTime", 1) {
         Ok(config) => config,
         Err(err) => {
             tracing::error!(

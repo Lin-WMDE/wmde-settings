@@ -5,6 +5,8 @@
 pub mod about;
 
 #[cfg(feature = "page-about")]
+pub mod hardware;
+#[cfg(feature = "page-about")]
 pub mod info;
 #[cfg(feature = "page-users")]
 pub mod users;
@@ -38,6 +40,7 @@ impl page::AutoBind<crate::pages::Message> for Page {
         #[cfg(feature = "page-about")]
         {
             page = page.sub_page::<about::Page>();
+            page = page.sub_page::<hardware::Page>();
         }
 
         page

@@ -277,7 +277,9 @@ about-device = Имя устройства
     .desc = Это имя видно для других устройств по сети или Bluetooth
 about-hardware = Оборудование
     .model = Модель оборудования
+    .motherboard = Материнская плата
     .memory = Память
+    .swap = Подкачка
     .processor = Процессор
     .graphics = Графика
     .disk-capacity = Ёмкость диска
@@ -896,3 +898,44 @@ bluetooth-display-passkey = Сопряжение по Bluetooth
     .description = Введите следующий код на { $device }, затем нажмите Enter
 bluetooth-display-pin = Сопряжение по Bluetooth
     .description = Введите следующий PIN-код на { $device }, затем нажмите Enter
+
+## WMDE: подстраница «Оборудование» в категории «Система и учётные записи»
+hardware = Оборудование
+    .desc = Прошивка, процессор, накопители, графика, сеть и подключённые устройства
+
+hardware-none = Ничего не найдено
+hardware-usage = Занято { $used } из { $total } ({ $percent }%)
+
+hardware-state =
+    .enabled = Включено
+    .disabled = Отключено
+    .present = Присутствует
+    .absent = Отсутствует
+    .connected = Подключён
+    .not-applicable = Неприменимо
+    .requires-root = Требуются права администратора
+
+hardware-firmware = Прошивка
+    .vendor = Производитель BIOS
+    .version = Версия BIOS
+    .date = Дата BIOS
+    .board = Материнская плата
+    .chassis = Корпус
+    .type = Тип прошивки
+    .legacy = Устаревший BIOS
+    .secure-boot = Безопасная загрузка
+    .setup-mode = Режим настройки
+    .tpm = TPM
+    .microcode = Микрокод процессора
+
+hardware-processor = Процессор
+    .model = Модель
+    .cores = Ядра / потоки
+    .frequency = Максимальная частота
+
+hardware-storage = Накопители
+hardware-graphics = Графика и мониторы
+hardware-network = Сетевые интерфейсы
+    .virtual-hidden = Виртуальных интерфейсов скрыто
+hardware-usb = Устройства USB
+hardware-pci = Устройства PCI

@@ -354,8 +354,7 @@ impl Battery {
             ""
         };
 
-        let icon_name =
-            format!("wmde-applet-battery-level-{battery_percent}-{charging}symbolic",);
+        let icon_name = format!("wmde-applet-battery-level-{battery_percent}-{charging}symbolic",);
 
         Self {
             icon_name,

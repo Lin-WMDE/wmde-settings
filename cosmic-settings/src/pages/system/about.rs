@@ -198,7 +198,9 @@ fn device() -> Section<crate::pages::Message> {
 fn hardware() -> Section<crate::pages::Message> {
     crate::slab!(descriptions {
         model = fl!("about-hardware", "model");
+        motherboard = fl!("about-hardware", "motherboard");
         memory = fl!("about-hardware", "memory");
+        swap = fl!("about-hardware", "swap");
         processor = fl!("about-hardware", "processor");
         graphics = fl!("about-hardware", "graphics");
         disk_capacity = fl!("about-hardware", "disk-capacity");
@@ -217,7 +219,15 @@ fn hardware() -> Section<crate::pages::Message> {
                         .align_items(Alignment::Center),
                 )
                 .add(
+                    settings::flex_item(&*desc[motherboard], text::body(&page.info.motherboard))
+                        .align_items(Alignment::Center),
+                )
+                .add(
                     settings::flex_item(&*desc[memory], text::body(&page.info.memory))
+                        .align_items(Alignment::Center),
+                )
+                .add(
+                    settings::flex_item(&*desc[swap], text::body(&page.info.swap))
                         .align_items(Alignment::Center),
                 )
                 .add(

@@ -51,7 +51,7 @@ itoa = "1.0.17"
 libcosmic.workspace = true
 iced_winit.workspace = true
 locale1 = { git = "https://github.com/pop-os/dbus-settings-bindings", optional = true }
-sysinfo = { version = "=0.38.0", optional = true }
+wmde-hardware = { path = "../pages/hardware" }
 mime-apps = { package = "cosmic-mime-apps", git = "https://github.com/pop-os/cosmic-mime-apps", features = ["tokio"], optional = true }
 notify = "8.2.0"
 nmrs = { version = "3.4.0", optional = true }
@@ -67,7 +67,10 @@ slotmap = "1.1.1"
 static_init = "1.0.4"
 sunrise = "3.0.0"
 timedate-zbus = { git = "https://github.com/pop-os/dbus-settings-bindings", optional = true }
-tokio = { workspace = true, features = ["fs", "io-util", "process", "sync"] }
+# "rt": the About and Hardware pages hand hardware collection to spawn_blocking. It would
+# also arrive through libcosmic's feature unification, but relying on another crate's
+# features for a call we make ourselves is the kind of thing that breaks silently.
+tokio = { workspace = true, features = ["fs", "io-util", "process", "rt", "sync"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.22", features = ["env-filter"] }
 udev = { version = "0.9.3", optional = true }
@@ -149,7 +152,7 @@ page-accessibility = [
     "dep:cosmic-settings-accessibility-subscription",
     "dep:cosmic-settings-a11y-manager-subscription",
 ]
-page-about = ["dep:hostname1-zbus", "dep:sysinfo", "dep:zbus"]
+page-about = ["dep:hostname1-zbus", "dep:zbus"]
 page-bluetooth = [
     "dep:cosmic-settings-bluetooth-subscription",
     "dep:zbus",

@@ -5,7 +5,11 @@
 # installs /usr/bin/wmde-settings, the fun.wmde.Settings desktop/metainfo/polkit
 # surfaces, per-page .desktop entries, appid icons, wmde-illustration-* status
 # icons, and the fun.wmde.* default-schema tree under /usr/share/wmde/. It ships
-# alongside cosmic-settings with no shared paths, so NO conflicts/replaces cosmic-*.
+# alongside cosmic-settings with no shared paths, so nothing here relates to cosmic-*.
+#
+# It absorbed wmde-sysinfo (the standalone System Information app): its collection layer
+# is now the wmde-hardware crate and its content is the Hardware sub-page under System &
+# accounts. Hence replaces/conflicts below.
 pkgname=wmde-settings
 pkgver=1.0.12
 pkgrel=5
@@ -13,10 +17,20 @@ pkgdesc="WMDE settings application (fork of cosmic-settings) - fun.wmde.Settings
 arch=('x86_64')
 url="https://wmde.fun"
 license=('GPL-3.0-only')
+# replaces is what makes `pacman -Syu` actually REMOVE an installed wmde-sysinfo; dropping
+# the package from the repo alone would leave it on the machine forever as a foreign one.
+# conflicts covers the paths that bypass -Syu (pacman -U, a fresh pacman -S).
+# provides is deliberately absent: this package installs no /usr/bin/wmde-sysinfo, so
+# claiming the name would be a lie and would keep `pacman -S wmde-sysinfo` alive for good.
+replaces=('wmde-sysinfo')
+conflicts=('wmde-sysinfo')
 # Runtime: wayland client, xkbcommon, udev (display page), pipewire + libpulse
 # (sound page audio client), fontconfig/expat (font handling). Verify with namcap.
+# hwdata came in with the Hardware page: without /usr/share/hwdata/{pci,usb,pnp}.ids the
+# PCI, USB and display rows can only show raw hex ids. pciutils is deliberately NOT here -
+# the point of absorbing wmde-sysinfo was to drop the two `lspci -nn` subprocesses.
 depends=('glibc' 'gcc-libs' 'wayland' 'libxkbcommon' 'libinput' 'udev'
-         'pipewire' 'libpulse' 'fontconfig' 'expat' 'dav1d')
+         'pipewire' 'libpulse' 'fontconfig' 'expat' 'dav1d' 'hwdata')
 # Sibling WMDE forks consumed as local path/patch crates at build time; runtime
 # integration (daemon, panel, comp) is provided by their own packages.
 makedepends=('rust' 'cargo' 'just' 'git' 'clang' 'lld' 'pkgconf' 'dav1d'

@@ -36,6 +36,9 @@ pub enum Message {
     #[cfg(feature = "page-about")]
     About(system::about::Message),
     Appearance(desktop::appearance::Message),
+    /// WMDE: the Hardware sub-page under System & accounts.
+    #[cfg(feature = "page-about")]
+    Hardware(system::hardware::Message),
     Applications(applications::Message),
     #[cfg(feature = "page-bluetooth")]
     Bluetooth(bluetooth::Message),

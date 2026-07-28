@@ -1,0 +1,14 @@
+[package]
+name = "wmde-hardware"
+version = "0.1.0"
+edition = "2024"
+rust-version.workspace = true
+license = "GPL-3.0-only"
+description = "Hardware and system facts for WMDE Settings, read from sysfs/procfs/DMI"
+publish = false
+
+[dependencies]
+# statvfs (disk usage matching df), getifaddrs (per-interface IPs), uname.
+# Already in the graph through libcosmic, so declaring it adds no build unit.
+libc = "0.2"
+log = "0.4"

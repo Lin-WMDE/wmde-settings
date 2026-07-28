@@ -34,7 +34,11 @@ pub struct Page {
 
 impl Default for Page {
     fn default() -> Self {
-        let comp_config = cosmic_config::Config::new(crate::config::COSMIC_COMP_CONFIG, crate::config::COSMIC_COMP_CONFIG_VERSION).unwrap();
+        let comp_config = cosmic_config::Config::new(
+            crate::config::COSMIC_COMP_CONFIG,
+            crate::config::COSMIC_COMP_CONFIG_VERSION,
+        )
+        .unwrap();
         let comp_workspace_config = comp_config.get("workspaces").unwrap_or_else(|err| {
             if err.is_err() {
                 error!(?err, "Failed to read config 'workspaces'");
