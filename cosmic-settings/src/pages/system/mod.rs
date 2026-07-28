@@ -37,12 +37,9 @@ impl page::AutoBind<crate::pages::Message> for Page {
             page = page.sub_page::<users::Page>();
         }
 
-        #[cfg(feature = "page-about")]
-        {
-            page = page.sub_page::<about::Page>();
-            page = page.sub_page::<hardware::Page>();
-        }
-
+        // WMDE: `about` and `hardware` live here as modules but are registered as
+        // top-level pages in `app.rs`, not as sub-pages of this category. A page only
+        // gets its own nav-bar entry when it goes through `insert_page`.
         page
     }
 }

@@ -1,13 +1,27 @@
 // Copyright 2023 System76 <info@system76.com>
 // SPDX-License-Identifier: GPL-3.0-only
 
-use cosmic::iced::Alignment;
+use cosmic::iced::alignment::Horizontal;
+use cosmic::iced::{Alignment, Background, Border, Color, ContentFit, Length};
 use cosmic_settings_page::{self as page, Section, section};
 
 use super::info::Info;
-use cosmic::widget::{editable_input, list_column, settings, text};
-use cosmic::{Apply, Task};
+use cosmic::widget::{self, editable_input, icon, list_column, settings, text};
+use cosmic::{Apply, Task, theme};
 use slotmap::SlotMap;
+
+/// The WMDE brand blue, fixed rather than the theme accent: the logo and the caption on
+/// the banner are white, and a user-chosen accent can be pale enough to swallow them.
+const BRAND: Color = Color {
+    r: 0.0,
+    g: 0.470_588_2,
+    b: 0.843_137_3,
+    a: 1.0,
+};
+
+/// Shipped with the app: there is no WMDE brand mark in any icon theme, and
+/// `distributor-logo` resolves to the Ubuntu logo in the primary one.
+const WMDE_LOGO: &[u8] = include_bytes!("../../../../resources/wmde-logo.svg");
 
 #[derive(Clone, Debug)]
 pub enum Message {
@@ -52,6 +66,7 @@ impl page::Page<crate::pages::Message> for Page {
         sections: &mut SlotMap<section::Entity, Section<crate::pages::Message>>,
     ) -> Option<page::Content> {
         Some(vec![
+            sections.insert(banner()),
             sections.insert(device()),
             sections.insert(hardware()),
             sections.insert(os()),
@@ -160,6 +175,59 @@ async fn set_hostname_impl(hostname: &str) -> Result<(), String> {
         .map_err(|e| format!("failed to set static hostname: {}", e))?;
 
     Ok(())
+}
+
+/// WMDE: the banner that opens the page - logo, machine name, OS.
+///
+/// A section does not have to be a settings card: `view_fn` may return any element, which
+/// is the only way to get something non-tabular onto a settings page. `search_ignore`
+/// keeps it out of the search index, since it carries data rather than a label.
+fn banner() -> Section<crate::pages::Message> {
+    Section::default()
+        .search_ignore()
+        .view::<Page>(move |_binder, page, _section| {
+            let spacing = theme::spacing();
+
+            let logo = icon::icon(icon::from_svg_bytes(WMDE_LOGO))
+                .size(96)
+                .width(Length::Fixed(96.0))
+                .height(Length::Fixed(96.0))
+                .content_fit(ContentFit::Contain);
+
+            let body = widget::column::with_capacity(3)
+                .push(logo)
+                .push(text::title2(page.info.hardware_model.clone()))
+                .push(text::body(page.info.operating_system.clone()))
+                .spacing(spacing.space_xs)
+                .align_x(Alignment::Center)
+                .width(Length::Fill);
+
+            widget::container(body)
+                .class(banner_style())
+                .padding(spacing.space_l)
+                .width(Length::Fill)
+                .align_x(Horizontal::Center)
+                .into()
+        })
+}
+
+fn banner_style() -> theme::Container<'static> {
+    theme::Container::custom(|theme| {
+        let cosmic = theme.cosmic();
+        widget::container::Style {
+            background: Some(Background::Color(BRAND)),
+            // Set explicitly in both directions: a container always overrides the
+            // inherited text colour, so relying on inheritance here silently yields the
+            // body colour on a blue background.
+            text_color: Some(Color::WHITE),
+            icon_color: Some(Color::WHITE),
+            border: Border {
+                radius: cosmic.radius_l().into(),
+                ..Default::default()
+            },
+            ..Default::default()
+        }
+    })
 }
 
 fn device() -> Section<crate::pages::Message> {

@@ -210,6 +210,12 @@ impl cosmic::Application for SettingsApp {
             context_title: None,
         };
 
+        // WMDE: About and Hardware are top-level pages, and About is first - the app
+        // opens on it. Order of these calls IS the order of the nav bar.
+        #[cfg(feature = "page-about")]
+        app.insert_page::<system::about::Page>();
+        #[cfg(feature = "page-about")]
+        app.insert_page::<system::hardware::Page>();
         #[cfg(feature = "page-networking")]
         app.insert_page::<networking::Page>();
         #[cfg(feature = "page-bluetooth")]
@@ -229,12 +235,21 @@ impl cosmic::Application for SettingsApp {
         app.insert_page::<time::Page>();
         app.insert_page::<system::Page>();
 
+        // WMDE: always open on About. The remembered page survives only as a fallback for
+        // a build without `page-about`, which also keeps `last_active_page` a field that
+        // is still read rather than dead weight. An explicit CLI page still wins.
+        #[cfg(feature = "page-about")]
+        let landing_id = app.pages.page_id::<system::about::Page>();
+        #[cfg(not(feature = "page-about"))]
+        let landing_id: Option<Entity> = None;
+
         let active_id = match flags.sub_command {
             Some(p) => app.subtask_to_page(&p),
-            None => app
-                .pages
-                .find_page_by_id(&app.last_active_page)
-                .map(|(id, _info)| id),
+            None => landing_id.or_else(|| {
+                app.pages
+                    .find_page_by_id(&app.last_active_page)
+                    .map(|(id, _info)| id)
+            }),
         }
         .unwrap_or(desktop_id);
 
