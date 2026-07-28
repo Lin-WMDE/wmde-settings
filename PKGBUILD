@@ -29,8 +29,12 @@ conflicts=('wmde-sysinfo')
 # hwdata came in with the Hardware page: without /usr/share/hwdata/{pci,usb,pnp}.ids the
 # PCI, USB and display rows can only show raw hex ids. pciutils is deliberately NOT here -
 # the point of absorbing wmde-sysinfo was to drop the two `lspci -nn` subprocesses.
+# hicolor-icon-theme: the package installs into /usr/share/icons/hicolor and namcap
+# errors without it. It arrives transitively through wmde-icons, but a standalone
+# `pacman -S wmde-settings` should be correct on its own.
 depends=('glibc' 'gcc-libs' 'wayland' 'libxkbcommon' 'libinput' 'udev'
-         'pipewire' 'libpulse' 'fontconfig' 'expat' 'dav1d' 'hwdata')
+         'pipewire' 'libpulse' 'fontconfig' 'expat' 'dav1d' 'hwdata'
+         'hicolor-icon-theme')
 # Sibling WMDE forks consumed as local path/patch crates at build time; runtime
 # integration (daemon, panel, comp) is provided by their own packages.
 makedepends=('rust' 'cargo' 'just' 'git' 'clang' 'lld' 'pkgconf' 'dav1d'
