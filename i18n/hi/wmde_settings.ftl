@@ -1,4 +1,4 @@
-app = कास्मिक सेटिंग्स
+app = WMDE सेटिंग्स
 dbus-connection-error = DBus से कनेक्ट करने में विफल
 ok = ठीक है
 unknown = अज्ञात
