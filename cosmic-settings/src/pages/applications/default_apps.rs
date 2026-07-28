@@ -525,7 +525,7 @@ async fn load_terminal_apps(list: &mime_apps::List, assocs: &mime_apps::Associat
             continue;
         };
 
-        if selected.is_none() && app.appid.as_ref() == "com.system76.CosmicTerm" {
+        if selected.is_none() && app.appid.as_ref() == "fun.wmde.term" {
             selected = Some(id);
         }
 

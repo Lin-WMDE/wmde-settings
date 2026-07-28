@@ -21,10 +21,6 @@ import 'cargo.just'
 [private]
 default: build-release
 
-# Build a debian package locally without a schroot or vendoring
-build-deb:
-    dpkg-buildpackage -d -nc
-
 # Install everything
 install:
     install -Dm0644 {{'resources' / appid + '.metainfo.xml'}} {{metainfo-dst}}
@@ -80,13 +76,13 @@ check-features:
         done
     done
 
-# Bump cargo version, create git commit, and create tag
+# Bump cargo version, create git commit, and create tag.
+# WMDE note: package versions come from git describe in the PKGBUILD, so this is only
+# for the crate version; the debian changelog step was dropped with the debian/ tree.
 tag version:
     find -type f -name Cargo.toml -exec sed -i '0,/^version/s/^version.*/version = "{{version}}"/' '{}' \; -exec git add '{}' \;
     cargo check
     cargo clean
-    dch -D noble -v {{version}}
-    git add Cargo.lock debian/changelog
+    git add Cargo.lock
     git commit -m 'release: {{version}}'
-    git commit --amend
     git tag -a {{version}} -m ''

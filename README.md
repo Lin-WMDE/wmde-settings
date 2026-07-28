@@ -24,7 +24,8 @@ The accent palettes on the Appearance settings page are configurable through the
 
 ### Dependencies
 
-See the `Build-Depends` section of the [debian control file](./debian/control).
+See `makedepends` in the [PKGBUILD](./PKGBUILD), and `forks/Dockerfile.build` in the
+WMDE project for the container the packages are actually built in.
 
 ### Install
 
@@ -42,10 +43,11 @@ If packaging for a Linux distribution, vendor dependencies locally with the `ven
 ```sh
 just vendor
 just build-vendored
-just rootdir=debian/wmde-settings prefix=/usr install
+just rootdir="$pkgdir" prefix=/usr install
 ```
 
-It is recommended to build a source tarball with the vendored dependencies, which can typically be done by running `just vendor` on the host system before it enters the build environment. Reference [debian/rules](./debian/rules) to see how we generate debian packages with `sbuild`.
+WMDE packages for Arch: see [PKGBUILD](./PKGBUILD). The whole stack is built through
+`tools/build-packages.sh` in the WMDE project, inside the `wmde-build-full` container.
 
 ## Developers
 

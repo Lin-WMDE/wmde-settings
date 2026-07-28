@@ -290,7 +290,7 @@ fn os() -> Section<crate::pages::Message> {
         })
 }
 
-// Related settings: for 2nd COSMIC release
+// Related settings: reserved by upstream, not wired up in WMDE yet
 // fn related() -> Section<crate::pages::Message> {
 //     Section::default()
 //         .title(fl!("about-related"))

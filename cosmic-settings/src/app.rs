@@ -985,8 +985,9 @@ impl SettingsApp {
     fn set_title(&mut self) -> Task<crate::Message> {
         self.set_window_title(
             format!(
-                "{} - WMDE Settings",
-                self.pages.info[self.active_page].title
+                "{} - {}",
+                self.pages.info[self.active_page].title,
+                fl!("app")
             ),
             self.core.main_window_id().unwrap(),
         )

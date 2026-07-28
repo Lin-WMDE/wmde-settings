@@ -1,6 +1,6 @@
 # Testing
 
-This document provides a regression testing checklist for COSMIC Settings and the COSMIC Settings Daemon. The checklist provides a starting point for Quality Assurance reviews.
+This document provides a regression testing checklist for WMDE Settings and the WMDE Settings Daemon. The checklist provides a starting point for Quality Assurance reviews.
 
 ## Checklist
 
@@ -25,7 +25,7 @@ This document provides a regression testing checklist for COSMIC Settings and th
 
 #### Appearance
 
-- [ ] Open a COSMIC app and a GNOME app. When switching between Dark and Light mode, the COSMIC app switches immediately, and the GNOME app switches after restarting.
+- [ ] Open a WMDE app and a GTK app. When switching between Dark and Light mode, the WMDE app switches immediately, and the GTK app switches after restarting.
 - [ ] Changing the accent color works.
 - [ ] Changing the roundness style works and does not affect other aspects of the theme (e.g. color mode).
 - [ ] Changing the interface density works.
@@ -34,13 +34,6 @@ This document provides a regression testing checklist for COSMIC Settings and th
 
 - [ ] Enable tiling. "Automatically hide panel" takes effect immediately.
 - [ ] Disable tiling; maximize a window. "Automatically hide panel" takes effect immediately.
-
-#### Dock
-
-- [ ] Enable tiling. "Automatically hide dock" takes effect immediately.
-- [ ] Disable tiling; maximize a window. "Automatically hide dock" takes effect immediately.
-- [ ] Changing position on screen works.
-- [ ] All Style settings take effect as expected.
 
 ### Displays
 

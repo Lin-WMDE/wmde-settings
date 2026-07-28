@@ -1,4 +1,4 @@
-app = Параметры
+app = Параметры WMDE
 unknown = Неизвестно
 number = { $number }
 

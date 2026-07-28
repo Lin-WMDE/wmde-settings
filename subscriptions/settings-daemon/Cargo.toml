@@ -3,7 +3,7 @@ name = "cosmic-settings-daemon-subscription"
 version = "1.0.7"
 edition = "2024"
 rust-version.workspace = true
-publish = true
+publish = false
 
 [dependencies]
 futures = "0.3.32"
