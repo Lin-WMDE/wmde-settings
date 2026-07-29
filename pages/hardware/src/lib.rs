@@ -169,7 +169,6 @@ pub struct Summary {
     pub disk_total_bytes: u64,
     pub disk_count: usize,
     pub desktop: Value,
-    pub desktop_version: &'static str,
     pub display_server: DisplayServer,
 }
 

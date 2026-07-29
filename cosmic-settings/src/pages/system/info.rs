@@ -48,7 +48,13 @@ impl From<&SysInfo> for Info {
     fn from(info: &SysInfo) -> Self {
         let summary = &info.summary;
         Info {
-            desktop_environment: format!("WMDE {}", summary.desktop_version),
+            // The WMDE stack exposes no runtime version anywhere, so this app's own
+            // version stands in for the desktop's. Deliberately not asking pacman.
+            //
+            // Read HERE and not in the collection layer: `env!` expands in the crate it is
+            // written in, so once this moved into `wmde-hardware` it started reporting
+            // that crate's 0.1.0 instead of the app's version.
+            desktop_environment: format!("WMDE {}", env!("CARGO_PKG_VERSION")),
             device_name: value(&summary.hostname),
             disk_capacity: if summary.disk_total_bytes > 0 {
                 fmt_bytes_dec(summary.disk_total_bytes)

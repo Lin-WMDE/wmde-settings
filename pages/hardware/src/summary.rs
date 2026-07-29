@@ -64,9 +64,6 @@ pub fn probe(graphics: &Graphics, disks: &[Disk]) -> Summary {
             Value::from_option(env_var("XDG_CURRENT_DESKTOP")),
             Value::from_option(env_var("DESKTOP_SESSION")),
         ]),
-        // The WMDE stack exposes no runtime version anywhere, so this app's own version
-        // stands in for the desktop's. Deliberately not asking pacman.
-        desktop_version: env!("CARGO_PKG_VERSION"),
         display_server: display_server(),
     }
 }
