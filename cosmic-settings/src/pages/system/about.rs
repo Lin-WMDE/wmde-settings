@@ -2,21 +2,17 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use cosmic::iced::alignment::Horizontal;
-use cosmic::iced::{Alignment, ContentFit, Length};
+use cosmic::iced::{Alignment, ContentFit, Length, Subscription, event, keyboard};
 use cosmic_settings_page::{self as page, Section, section};
 
 use super::info::Info;
-use cosmic::widget::{self, editable_input, icon, text};
+use cosmic::widget::{self, icon, text};
 use cosmic::{Apply, Task, theme};
 use slotmap::SlotMap;
 
 /// Shipped with the app: there is no WMDE brand mark in any icon theme, and
 /// `distributor-logo` resolves to the Ubuntu logo in the primary one.
 const WMDE_LOGO: &[u8] = include_bytes!("../../../../resources/wmde-logo.svg");
-
-/// Width of the label column. Fixed on purpose: the colons line up only when every label
-/// occupies the same width, and `view_fn` has no measuring pass to derive one from.
-const LABEL_WIDTH: f32 = 220.0;
 
 /// Width of the whole `label: value` block.
 ///
@@ -27,17 +23,10 @@ const LABEL_WIDTH: f32 = 220.0;
 /// the same constant for the device row, which is otherwise far wider than the rest.
 const BLOCK_WIDTH: f32 = 540.0;
 
-/// Width of the device-name field, and of the hint under it.
-///
-/// `editable_input` parks its pencil at the right edge of the field, so the field's width
-/// is the distance between the name and the icon. The hint takes the same width, so field
-/// and hint read as one column instead of the hint sprawling wider than the thing it
-/// explains.
-const FIELD_WIDTH: f32 = 200.0;
-
 #[derive(Clone, Debug)]
 pub enum Message {
     Error(String),
+    HostnameCancel,
     HostnameEdit(bool),
     HostnameInput(String),
     HostnameSubmit,
@@ -110,11 +99,37 @@ impl page::Page<crate::pages::Message> for Page {
 
         Task::none()
     }
+
+    /// Escape abandons an edit of the device name.
+    ///
+    /// Enter is the field's own `on_submit`, but Escape has no such hook, and the page
+    /// subscription is the narrowest place to catch it: only the active page is subscribed,
+    /// and this one only while the field is open. The status of the event is ignored on
+    /// purpose - the focused field consumes the key for its own unfocus, and we still want
+    /// to leave edit mode.
+    fn subscription(&self, _core: &cosmic::Core) -> Subscription<crate::pages::Message> {
+        if !self.editing_device_name {
+            return Subscription::none();
+        }
+
+        event::listen_with(|event, _status, _id| match event {
+            cosmic::iced::Event::Keyboard(keyboard::Event::KeyPressed {
+                key: keyboard::Key::Named(keyboard::key::Named::Escape),
+                ..
+            }) => Some(crate::pages::Message::About(Message::HostnameCancel)),
+            _ => None,
+        })
+    }
 }
 
 impl Page {
     pub fn update(&mut self, message: Message) -> cosmic::app::Task<crate::Message> {
         match message {
+            Message::HostnameCancel => {
+                self.editing_device_name = false;
+                self.hostname_input = self.info.device_name.clone();
+            }
+
             Message::HostnameEdit(editing) => {
                 self.editing_device_name = editing;
             }
@@ -144,15 +159,20 @@ impl Page {
     }
 
     fn hostname_submit(&mut self) -> cosmic::app::Task<crate::app::Message> {
+        // Leaving edit mode is unconditional: the row shows `hostname_input`, and both
+        // early returns below would otherwise strand the field open on the very input the
+        // system just refused.
+        self.editing_device_name = false;
+
         if self.hostname_input == self.info.device_name {
             return Task::none();
         }
 
         if !hostname_validator::is_valid(&self.hostname_input) {
+            self.hostname_input = self.info.device_name.clone();
             return Task::none();
         }
 
-        self.editing_device_name = false;
         let hostname = self.hostname_input.clone();
 
         cosmic::Task::future(async move { set_hostname(hostname).await })
@@ -228,8 +248,11 @@ fn header() -> Section<crate::pages::Message> {
         })
 }
 
-/// One `label: value` line. The label is right aligned against the fixed label column, so
-/// every colon on the page sits at the same x.
+/// One `label: value` line. Each half takes exactly half the block, so the colon of every
+/// row on the page lands on the block's centre line.
+///
+/// Both halves must claim their portion: a value left to size itself would let the label
+/// take everything the value did not use, and the halves would stop being halves.
 fn detail<'a, M: 'static>(
     label: &str,
     value: impl Into<cosmic::Element<'a, M>>,
@@ -238,9 +261,9 @@ fn detail<'a, M: 'static>(
         .push(
             text::body(format!("{label}:"))
                 .align_x(Horizontal::Right)
-                .width(Length::Fixed(LABEL_WIDTH)),
+                .width(Length::FillPortion(1)),
         )
-        .push(value)
+        .push(widget::container(value).width(Length::FillPortion(1)))
         .spacing(theme::spacing().space_xs)
         // Top, not centre: a value taller than one line would otherwise push its label
         // down into the middle of the cell, away from the line it names. Single-line rows
@@ -292,25 +315,51 @@ fn device() -> Section<crate::pages::Message> {
         .view::<Page>(move |_binder, page, section| {
             let desc = &section.descriptions;
 
-            let hostname_input = editable_input(
-                "",
-                &page.hostname_input,
-                page.editing_device_name,
-                Message::HostnameEdit,
-            )
-            .width(FIELD_WIDTH)
-            .on_input(Message::HostnameInput)
-            .on_unfocus(Message::HostnameSubmit)
-            .on_submit(|_| Message::HostnameSubmit);
+            let spacing = theme::spacing();
 
-            // The hint rides under the field rather than under the label: keeping it in
-            // the value cell leaves the label column, and so every colon, where it was.
-            let value = widget::column::with_capacity(2)
-                .push(hostname_input)
-                .push(text::caption(&*desc[device_desc]).width(Length::Fixed(FIELD_WIDTH)))
-                .spacing(theme::spacing().space_xxxs);
+            // Not `editable_input`: that widget is a text field whose pencil hangs off its
+            // right edge, so it neither lines up with the plain-text rows around it nor
+            // keeps the icon next to the name. Reading and editing are two different rows
+            // here, and the reading one is built from the same `text::body` as every other
+            // value on the page.
+            let value: cosmic::Element<Message> = if page.editing_device_name {
+                widget::row::with_capacity(3)
+                    .push(
+                        widget::text_input("", &page.hostname_input)
+                            .width(Length::Fill)
+                            .on_input(Message::HostnameInput)
+                            .on_submit(|_| Message::HostnameSubmit),
+                    )
+                    .push(widget::button::standard(fl!("save")).on_press(Message::HostnameSubmit))
+                    .push(widget::button::standard(fl!("cancel")).on_press(Message::HostnameCancel))
+                    .spacing(spacing.space_xxs)
+                    .align_y(Alignment::Center)
+                    .into()
+            } else {
+                widget::row::with_capacity(2)
+                    .push(text::body(&page.hostname_input))
+                    .push(
+                        widget::button::icon(icon::from_name("edit-symbolic").size(16))
+                            .padding(2)
+                            .on_press(Message::HostnameEdit(true)),
+                    )
+                    .spacing(spacing.space_xxs)
+                    .align_y(Alignment::Center)
+                    .into()
+            };
 
-            block(detail(&desc[device], value)).map(crate::pages::Message::About)
+            // The hint spans the block and is centred: it explains the row, not the value,
+            // and hanging it in the value half would make it read as part of the field.
+            widget::column::with_capacity(2)
+                .push(detail(&desc[device], value))
+                .push(
+                    text::caption(&*desc[device_desc])
+                        .width(Length::Fill)
+                        .align_x(Horizontal::Center),
+                )
+                .spacing(spacing.space_xxs)
+                .apply(block)
+                .map(crate::pages::Message::About)
         })
 }
 
