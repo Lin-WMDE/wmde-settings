@@ -1,6 +1,6 @@
 (
     base: "#00000000",
-    hover: "#00000000",
+    hover: "#63636333",
     pressed: "#16161680",
     selected: "#00000000",
     selected_text: "#0078D7FF",

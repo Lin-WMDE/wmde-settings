@@ -150,14 +150,47 @@ pub fn page_list_item<'a, Message: 'static + Clone>(
         .apply(container)
         .padding([space_s, space_m])
         .align_x(Alignment::Center)
-        .class(theme::Container::List)
         .width(Length::Fill)
         .apply(button::custom)
         .padding(0)
-        .class(theme::Button::Transparent)
+        .class(page_list_item_style())
         .on_press(message)
         .width(Length::Fill)
         .into()
+}
+
+/// WMDE: the card paints itself, so that it can light up under the cursor.
+///
+/// Upstream draws a `Container::List` card and wraps it in a `Button::Transparent`, whose
+/// `TRANSPARENT_COMPONENT` is transparent in every state. The card is opaque and sits on
+/// top of the button, so nothing about it could ever react to the pointer. Painting the
+/// card from the button instead gives it the hover every other list row in WMDE has, and
+/// costs nothing: the colours and the radius are the ones `Container::List` uses.
+fn page_list_item_style() -> theme::Button {
+    fn appearance(theme: &theme::Theme, background: cosmic::iced::Color) -> widget::button::Style {
+        let on = cosmic::iced::Color::from(theme.current_container().component.on);
+        let mut appearance = widget::button::Style::new();
+        appearance.background = Some(background.into());
+        appearance.text_color = Some(on);
+        appearance.icon_color = Some(on);
+        appearance.border_radius = theme.cosmic().corner_radii.radius_s.into();
+        appearance
+    }
+
+    theme::Button::Custom {
+        active: Box::new(|_focused, theme| {
+            appearance(theme, theme.current_container().component.base.into())
+        }),
+        disabled: Box::new(|theme| {
+            appearance(theme, theme.current_container().component.disabled.into())
+        }),
+        hovered: Box::new(|_focused, theme| {
+            appearance(theme, theme.current_container().component.hover.into())
+        }),
+        pressed: Box::new(|_focused, theme| {
+            appearance(theme, theme.current_container().component.pressed.into())
+        }),
+    }
 }
 
 #[must_use]
