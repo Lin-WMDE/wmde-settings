@@ -18,6 +18,15 @@ const WMDE_LOGO: &[u8] = include_bytes!("../../../../resources/wmde-logo.svg");
 /// occupies the same width, and `view_fn` has no measuring pass to derive one from.
 const LABEL_WIDTH: f32 = 220.0;
 
+/// Width of the whole `label: value` block.
+///
+/// Measured off `ref/kde_about.png` and `ref/kde_about_settings.webp`: in both, every row
+/// of every group shares ONE colon column, and the block that holds them is centred on the
+/// content area. Groups are separate sections here and are laid out independently, so they
+/// only agree on a colon column while they agree on a width - hence a constant, and hence
+/// the same constant for the device row, which is otherwise far wider than the rest.
+const BLOCK_WIDTH: f32 = 540.0;
+
 #[derive(Clone, Debug)]
 pub enum Message {
     Error(String),
@@ -211,8 +220,8 @@ fn header() -> Section<crate::pages::Message> {
         })
 }
 
-/// One `label: value` line: the label is right aligned against a fixed column, so every
-/// colon of a group sits at the same x.
+/// One `label: value` line. The label is right aligned against the fixed label column, so
+/// every colon on the page sits at the same x.
 fn detail<'a, M: 'static>(
     label: &str,
     value: impl Into<cosmic::Element<'a, M>>,
@@ -226,26 +235,39 @@ fn detail<'a, M: 'static>(
         .push(value)
         .spacing(theme::spacing().space_xs)
         .align_y(Alignment::Center)
+        .width(Length::Fill)
         .into()
 }
 
-/// A titled group of `detail` lines, centred on the page.
+/// Centre a block of rows on the page.
 ///
-/// The heading is centred over the lines, not over the page, and the lines keep a common
-/// left edge. Centring the lines themselves instead would move each label column by the
-/// width of its own value and scatter the colons.
+/// Same idiom as `SettingsApp::page_container`: a child capped by `max_width` inside a
+/// filling parent. The cap is what makes the block a known width, and a known width is
+/// what makes the colon column of one group land on the colon column of the next.
+fn block<'a, M: 'static>(content: impl Into<cosmic::Element<'a, M>>) -> cosmic::Element<'a, M> {
+    widget::container(content)
+        .max_width(BLOCK_WIDTH)
+        .width(Length::Fill)
+        .apply(widget::container)
+        .center_x(Length::Fill)
+        .into()
+}
+
+/// A titled group of `detail` lines. The heading is centred over the block, the lines keep
+/// the common left edge that the block gives them.
 fn group<'a, M: 'static>(title: &str, rows: Vec<cosmic::Element<'a, M>>) -> cosmic::Element<'a, M> {
     let spacing = theme::spacing();
 
-    widget::column::with_capacity(2)
-        .push(text::heading(title.to_owned()))
-        .push(widget::column::with_children(rows).spacing(spacing.space_xxs))
-        .spacing(spacing.space_xs)
-        .align_x(Alignment::Center)
-        .apply(widget::container)
-        .width(Length::Fill)
-        .align_x(Horizontal::Center)
-        .into()
+    block(
+        widget::column::with_capacity(2)
+            .push(
+                text::heading(title.to_owned())
+                    .width(Length::Fill)
+                    .align_x(Horizontal::Center),
+            )
+            .push(widget::column::with_children(rows).spacing(spacing.space_xxs))
+            .spacing(spacing.space_xs),
+    )
 }
 
 fn device() -> Section<crate::pages::Message> {
@@ -277,12 +299,7 @@ fn device() -> Section<crate::pages::Message> {
                 .push(text::caption(&*desc[device_desc]))
                 .spacing(theme::spacing().space_xxxs);
 
-            detail(&desc[device], value)
-                .apply(widget::container)
-                .width(Length::Fill)
-                .align_x(Horizontal::Center)
-                .apply(cosmic::Element::from)
-                .map(crate::pages::Message::About)
+            block(detail(&desc[device], value)).map(crate::pages::Message::About)
         })
 }
 
