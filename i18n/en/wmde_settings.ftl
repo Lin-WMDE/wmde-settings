@@ -1038,6 +1038,7 @@ about = About
 
 about-device = Device name
     .desc = This name appears to other network or Bluetooth devices
+    .edit = Edit
 
 about-hardware = Hardware
     .model = Hardware model

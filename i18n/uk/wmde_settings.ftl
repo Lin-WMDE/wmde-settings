@@ -527,6 +527,7 @@ system = Система і обліковки
 about = Про систему
 about-device = Назва пристрою
     .desc = Назва, яку бачать інші мережі та пристрої Bluetooth
+    .edit = Змінити
 about-hardware = Обладнання
     .model = Модель обладнання
     .motherboard = Материнська плата

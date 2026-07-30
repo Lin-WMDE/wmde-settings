@@ -248,6 +248,22 @@ fn header() -> Section<crate::pages::Message> {
         })
 }
 
+/// A compact icon button - the shape every action of the device-name row takes.
+///
+/// The label is not dropped, it moves into the tooltip. The row carries an action in each
+/// of its two states and two while editing, and there is no room for words next to a field
+/// that has to stay usable; an icon on its own tells a first-time reader nothing.
+fn icon_action<'a>(name: &'a str, label: String, message: Message) -> cosmic::Element<'a, Message> {
+    widget::tooltip(
+        widget::button::icon(icon::from_name(name).size(16))
+            .padding(2)
+            .on_press(message),
+        text::body(label),
+        widget::tooltip::Position::Bottom,
+    )
+    .into()
+}
+
 /// One `label: value` line. Each half takes exactly half the block, so the colon of every
 /// row on the page lands on the block's centre line.
 ///
@@ -330,19 +346,27 @@ fn device() -> Section<crate::pages::Message> {
                             .on_input(Message::HostnameInput)
                             .on_submit(|_| Message::HostnameSubmit),
                     )
-                    .push(widget::button::standard(fl!("save")).on_press(Message::HostnameSubmit))
-                    .push(widget::button::standard(fl!("cancel")).on_press(Message::HostnameCancel))
+                    .push(icon_action(
+                        "object-select-symbolic",
+                        fl!("save"),
+                        Message::HostnameSubmit,
+                    ))
+                    .push(icon_action(
+                        "window-close-symbolic",
+                        fl!("cancel"),
+                        Message::HostnameCancel,
+                    ))
                     .spacing(spacing.space_xxs)
                     .align_y(Alignment::Center)
                     .into()
             } else {
                 widget::row::with_capacity(2)
                     .push(text::body(&page.hostname_input))
-                    .push(
-                        widget::button::icon(icon::from_name("edit-symbolic").size(16))
-                            .padding(2)
-                            .on_press(Message::HostnameEdit(true)),
-                    )
+                    .push(icon_action(
+                        "edit-symbolic",
+                        fl!("about-device", "edit"),
+                        Message::HostnameEdit(true),
+                    ))
                     .spacing(spacing.space_xxs)
                     .align_y(Alignment::Center)
                     .into()
