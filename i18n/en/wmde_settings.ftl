@@ -1121,3 +1121,8 @@ hardware-network = Network interfaces
     .virtual-hidden = Virtual interfaces hidden
 hardware-usb = USB devices
 hardware-pci = PCI devices
+
+## WMDE: applet settings built from an installed schema
+
+applet-settings-none = This applet has no settings.
+applet-settings-too-new = These settings need a newer version of Settings.

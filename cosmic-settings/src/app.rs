@@ -235,6 +235,12 @@ impl cosmic::Application for SettingsApp {
         app.insert_page::<time::Page>();
         app.insert_page::<system::Page>();
 
+        // WMDE: one settings page per installed applet, built from the schema each
+        // applet ships. Must run after the pages above, because it hangs its pages off
+        // the applet lists the panel and dock pages registered.
+        #[cfg(feature = "wayland")]
+        pages::applets::register_all(&mut app.pages);
+
         // WMDE: always open on About. The remembered page survives only as a fallback for
         // a build without `page-about`, which also keeps `last_active_page` a field that
         // is still read rather than dead weight. An explicit CLI page still wins.
@@ -486,6 +492,13 @@ impl cosmic::Application for SettingsApp {
                     if let Some(page) = self.pages.page_mut::<system::hardware::Page>() {
                         return page.update(message).map(Into::into);
                     }
+                }
+                // WMDE: applet settings. Routed by the entity in the message rather than
+                // by page type: there is one page per applet, all of the same type, so
+                // `page_mut::<P>()` cannot tell them apart.
+                #[cfg(feature = "wayland")]
+                crate::pages::Message::AppletSettings(message) => {
+                    return pages::applets::update(&mut self.pages, message).map(Into::into);
                 }
                 #[cfg(feature = "page-accessibility")]
                 crate::pages::Message::AccessibilityMagnifier(message) => {

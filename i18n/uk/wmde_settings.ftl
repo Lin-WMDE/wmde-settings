@@ -981,3 +981,8 @@ hardware-network = Мережеві інтерфейси
     .virtual-hidden = Віртуальних інтерфейсів приховано
 hardware-usb = Пристрої USB
 hardware-pci = Пристрої PCI
+
+## WMDE: applet settings built from an installed schema
+
+applet-settings-none = Цей віджет не має налаштувань.
+applet-settings-too-new = Ці налаштування потребують новішої версії Налаштувань.

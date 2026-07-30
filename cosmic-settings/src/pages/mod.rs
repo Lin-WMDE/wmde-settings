@@ -5,6 +5,9 @@ use cosmic_settings_page::Entity;
 
 #[cfg(feature = "page-accessibility")]
 pub mod accessibility;
+/// WMDE: applet settings pages, built at runtime from installed schemas.
+#[cfg(feature = "wayland")]
+pub mod applets;
 pub mod applications;
 #[cfg(feature = "page-bluetooth")]
 pub mod bluetooth;
@@ -36,6 +39,10 @@ pub enum Message {
     #[cfg(feature = "page-about")]
     About(system::about::Message),
     Appearance(desktop::appearance::Message),
+    /// WMDE: a runtime applet settings page. Carries the entity of the page it came
+    /// from, because these pages are not in `typed_page_ids` and there may be several.
+    #[cfg(feature = "wayland")]
+    AppletSettings(applets::Message),
     /// WMDE: the Hardware sub-page under System & accounts.
     #[cfg(feature = "page-about")]
     Hardware(system::hardware::Message),

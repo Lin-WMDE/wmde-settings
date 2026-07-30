@@ -21,6 +21,7 @@ use cosmic::iced::{
 use cosmic::{Apply, Element, theme};
 
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::fmt::Debug;
 use std::mem;
 use std::path::{Path, PathBuf};
@@ -55,6 +56,10 @@ pub struct Page {
     pub(crate) reorder_widget_state: Option<(Applet<'static>, CosmicPanelConfig)>,
     pub(crate) search: String,
     pub(crate) context: Option<ContextDrawerVariant>,
+    /// WMDE: applet id -> its settings page, filled in by `pages::applets::register_all`
+    /// once every page exists. Empty until then, and empty in a build where no applet
+    /// list page was registered.
+    pub(crate) settings_pages: HashMap<String, page::Entity>,
 }
 
 impl Default for Page {
@@ -77,6 +82,7 @@ impl Default for Page {
             reorder_widget_state: None,
             search: String::new(),
             context: None,
+            settings_pages: HashMap::new(),
         }
     }
 }
@@ -271,6 +277,12 @@ impl Page {
                         .spacing(space_xxxs)
                         .width(Length::Fill)
                         .into(),
+                    // WMDE: settings are reachable before the applet is placed, so an
+                    // applet the user has not added is not also unconfigurable.
+                    button::icon(icon::from_name("preferences-system-symbolic"))
+                        .extra_small()
+                        .on_press(msg_map(Message::DetailStart(info.id.to_string())))
+                        .into(),
                     button::text(fl!("add"))
                         .on_press(msg_map(Message::AddApplet(info.clone())))
                         .into(),
@@ -384,8 +396,17 @@ impl Page {
                 list.retain(|id| id != &to_remove);
                 self.save();
             }
-            Message::DetailStart(_) | Message::DetailCenter(_) | Message::DetailEnd(_) => {
-                // TODO ask design team
+            // WMDE: open the applet's settings page. Which segment the applet sits in
+            // does not matter - an applet has one configuration wherever it is placed.
+            Message::DetailStart(id) | Message::DetailCenter(id) | Message::DetailEnd(id) => {
+                match self.settings_pages.get(&id) {
+                    Some(page) => {
+                        return cosmic::task::message(app::Message::PageMessage(
+                            crate::pages::Message::Page(*page),
+                        ));
+                    }
+                    None => error!("No settings page registered for applet {id}"),
+                }
             }
             Message::Cancel => {
                 if let Some((_, config)) = self.reorder_widget_state.take() {
@@ -628,7 +649,7 @@ impl<'a, Message: 'static + Clone> AppletReorderList<'a, Message> {
         info: Vec<Applet<'a>>,
         on_create_dnd_source: impl Fn(Applet<'static>) -> Message + 'a,
         on_remove: impl Fn(String) -> Message + 'a,
-        _on_details: impl Fn(String) -> Message + 'a,
+        on_details: impl Fn(String) -> Message + 'a,
         on_reorder: impl Fn(Vec<Applet<'static>>) -> Message + 'a,
         on_apply_reorder: Message,
         on_cancel: Message,
@@ -665,6 +686,11 @@ impl<'a, Message: 'static + Clone> AppletReorderList<'a, Message> {
                             } else {
                                 Some(text::caption(info.description))
                             })
+                            .into(),
+                        // WMDE: opens the applet's own settings page.
+                        button::icon(icon::from_name("preferences-system-symbolic"))
+                            .extra_small()
+                            .on_press(on_details(id_clone.clone()))
                             .into(),
                         button::icon(icon::from_name("edit-delete-symbolic"))
                             .extra_small()

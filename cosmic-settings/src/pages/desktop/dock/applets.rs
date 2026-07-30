@@ -37,6 +37,7 @@ impl Default for Page {
                 reorder_widget_state: None,
                 search: String::new(),
                 context: None,
+                settings_pages: std::collections::HashMap::new(),
             },
         }
     }
