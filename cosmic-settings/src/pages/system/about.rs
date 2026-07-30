@@ -2,26 +2,21 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
 use cosmic::iced::alignment::Horizontal;
-use cosmic::iced::{Alignment, Background, Border, Color, ContentFit, Length};
+use cosmic::iced::{Alignment, ContentFit, Length};
 use cosmic_settings_page::{self as page, Section, section};
 
 use super::info::Info;
-use cosmic::widget::{self, editable_input, icon, list_column, settings, text};
+use cosmic::widget::{self, editable_input, icon, text};
 use cosmic::{Apply, Task, theme};
 use slotmap::SlotMap;
-
-/// The WMDE brand blue, fixed rather than the theme accent: the logo and the caption on
-/// the banner are white, and a user-chosen accent can be pale enough to swallow them.
-const BRAND: Color = Color {
-    r: 0.0,
-    g: 0.470_588_2,
-    b: 0.843_137_3,
-    a: 1.0,
-};
 
 /// Shipped with the app: there is no WMDE brand mark in any icon theme, and
 /// `distributor-logo` resolves to the Ubuntu logo in the primary one.
 const WMDE_LOGO: &[u8] = include_bytes!("../../../../resources/wmde-logo.svg");
+
+/// Width of the label column. Fixed on purpose: the colons line up only when every label
+/// occupies the same width, and `view_fn` has no measuring pass to derive one from.
+const LABEL_WIDTH: f32 = 220.0;
 
 #[derive(Clone, Debug)]
 pub enum Message {
@@ -65,11 +60,12 @@ impl page::Page<crate::pages::Message> for Page {
         &self,
         sections: &mut SlotMap<section::Entity, Section<crate::pages::Message>>,
     ) -> Option<page::Content> {
+        // Software before hardware, as the reference lays it out.
         Some(vec![
-            sections.insert(banner()),
+            sections.insert(header()),
             sections.insert(device()),
-            sections.insert(hardware()),
             sections.insert(os()),
+            sections.insert(hardware()),
         ])
     }
 
@@ -177,12 +173,16 @@ async fn set_hostname_impl(hostname: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// WMDE: the banner that opens the page - logo, machine name, OS.
+/// WMDE: the header that opens the page - logo, operating system, machine.
 ///
 /// A section does not have to be a settings card: `view_fn` may return any element, which
 /// is the only way to get something non-tabular onto a settings page. `search_ignore`
 /// keeps it out of the search index, since it carries data rather than a label.
-fn banner() -> Section<crate::pages::Message> {
+///
+/// The operating system is the headline and the machine the caption under it, not the
+/// other way round: the machine is named again, in full, by the `model` and `motherboard`
+/// lines of the hardware group.
+fn header() -> Section<crate::pages::Message> {
     Section::default()
         .search_ignore()
         .view::<Page>(move |_binder, page, _section| {
@@ -194,40 +194,58 @@ fn banner() -> Section<crate::pages::Message> {
                 .height(Length::Fixed(96.0))
                 .content_fit(ContentFit::Contain);
 
-            let body = widget::column::with_capacity(3)
-                .push(logo)
-                .push(text::title2(page.info.hardware_model.clone()))
-                .push(text::body(page.info.operating_system.clone()))
-                .spacing(spacing.space_xs)
-                .align_x(Alignment::Center)
-                .width(Length::Fill);
+            let names = widget::column::with_capacity(2)
+                .push(text::title2(page.info.operating_system.clone()))
+                .push(text::body(page.info.hardware_model.clone()))
+                .spacing(spacing.space_xxs);
 
-            widget::container(body)
-                .class(banner_style())
-                .padding(spacing.space_l)
+            widget::row::with_capacity(2)
+                .push(logo)
+                .push(names)
+                .spacing(spacing.space_m)
+                .align_y(Alignment::Center)
+                .apply(widget::container)
                 .width(Length::Fill)
                 .align_x(Horizontal::Center)
                 .into()
         })
 }
 
-fn banner_style() -> theme::Container<'static> {
-    theme::Container::custom(|theme| {
-        let cosmic = theme.cosmic();
-        widget::container::Style {
-            background: Some(Background::Color(BRAND)),
-            // Set explicitly in both directions: a container always overrides the
-            // inherited text colour, so relying on inheritance here silently yields the
-            // body colour on a blue background.
-            text_color: Some(Color::WHITE),
-            icon_color: Some(Color::WHITE),
-            border: Border {
-                radius: cosmic.radius_l().into(),
-                ..Default::default()
-            },
-            ..Default::default()
-        }
-    })
+/// One `label: value` line: the label is right aligned against a fixed column, so every
+/// colon of a group sits at the same x.
+fn detail<'a, M: 'static>(
+    label: &str,
+    value: impl Into<cosmic::Element<'a, M>>,
+) -> cosmic::Element<'a, M> {
+    widget::row::with_capacity(2)
+        .push(
+            text::body(format!("{label}:"))
+                .align_x(Horizontal::Right)
+                .width(Length::Fixed(LABEL_WIDTH)),
+        )
+        .push(value)
+        .spacing(theme::spacing().space_xs)
+        .align_y(Alignment::Center)
+        .into()
+}
+
+/// A titled group of `detail` lines, centred on the page.
+///
+/// The heading is centred over the lines, not over the page, and the lines keep a common
+/// left edge. Centring the lines themselves instead would move each label column by the
+/// width of its own value and scatter the colons.
+fn group<'a, M: 'static>(title: &str, rows: Vec<cosmic::Element<'a, M>>) -> cosmic::Element<'a, M> {
+    let spacing = theme::spacing();
+
+    widget::column::with_capacity(2)
+        .push(text::heading(title.to_owned()))
+        .push(widget::column::with_children(rows).spacing(spacing.space_xxs))
+        .spacing(spacing.space_xs)
+        .align_x(Alignment::Center)
+        .apply(widget::container)
+        .width(Length::Fill)
+        .align_x(Horizontal::Center)
+        .into()
 }
 
 fn device() -> Section<crate::pages::Message> {
@@ -252,12 +270,17 @@ fn device() -> Section<crate::pages::Message> {
             .on_unfocus(Message::HostnameSubmit)
             .on_submit(|_| Message::HostnameSubmit);
 
-            let device_name = settings::item::builder(&*desc[device])
-                .description(&*desc[device_desc])
-                .flex_control(hostname_input);
+            // The hint rides under the field rather than under the label: keeping it in
+            // the value cell leaves the label column, and so every colon, where it was.
+            let value = widget::column::with_capacity(2)
+                .push(hostname_input)
+                .push(text::caption(&*desc[device_desc]))
+                .spacing(theme::spacing().space_xxxs);
 
-            list_column()
-                .add(device_name)
+            detail(&desc[device], value)
+                .apply(widget::container)
+                .width(Length::Fill)
+                .align_x(Horizontal::Center)
                 .apply(cosmic::Element::from)
                 .map(crate::pages::Message::About)
         })
@@ -280,45 +303,26 @@ fn hardware() -> Section<crate::pages::Message> {
         .view::<Page>(move |_binder, page, section| {
             let desc = &section.descriptions;
 
-            let mut section_builder = settings::section()
-                .title(&section.title)
-                .add(
-                    settings::flex_item(&*desc[model], text::body(&page.info.hardware_model))
-                        .align_items(Alignment::Center),
-                )
-                .add(
-                    settings::flex_item(&*desc[motherboard], text::body(&page.info.motherboard))
-                        .align_items(Alignment::Center),
-                )
-                .add(
-                    settings::flex_item(&*desc[memory], text::body(&page.info.memory))
-                        .align_items(Alignment::Center),
-                )
-                .add(
-                    settings::flex_item(&*desc[swap], text::body(&page.info.swap))
-                        .align_items(Alignment::Center),
-                )
-                .add(
-                    settings::flex_item(&*desc[processor], text::body(&page.info.processor))
-                        .align_items(Alignment::Center),
-                );
+            let mut rows = Vec::with_capacity(6 + page.info.graphics.len());
+            rows.push(detail(&desc[model], text::body(&page.info.hardware_model)));
+            rows.push(detail(
+                &desc[motherboard],
+                text::body(&page.info.motherboard),
+            ));
+            rows.push(detail(&desc[memory], text::body(&page.info.memory)));
+            rows.push(detail(&desc[swap], text::body(&page.info.swap)));
+            rows.push(detail(&desc[processor], text::body(&page.info.processor)));
 
             for card in &page.info.graphics {
-                section_builder = section_builder.add(
-                    settings::flex_item(&*desc[graphics], text::body(card.as_str()))
-                        .align_items(Alignment::Center),
-                );
+                rows.push(detail(&desc[graphics], text::body(card.as_str())));
             }
 
-            section_builder
-                .add(
-                    settings::flex_item(
-                        &*desc[disk_capacity],
-                        text::body(&page.info.disk_capacity),
-                    )
-                    .align_items(Alignment::Center),
-                )
-                .into()
+            rows.push(detail(
+                &desc[disk_capacity],
+                text::body(&page.info.disk_capacity),
+            ));
+
+            group(&section.title, rows)
         })
 }
 
@@ -336,35 +340,20 @@ fn os() -> Section<crate::pages::Message> {
         .descriptions(descriptions)
         .view::<Page>(move |_binder, page, section| {
             let desc = &section.descriptions;
-            settings::section()
-                .title(&section.title)
-                .add(
-                    settings::flex_item(&*desc[os], text::body(&page.info.operating_system))
-                        .align_items(Alignment::Center),
-                )
-                .add(
-                    settings::flex_item(&*desc[os_arch], text::body(&page.info.os_architecture))
-                        .align_items(Alignment::Center),
-                )
-                .add(
-                    settings::flex_item(&*desc[kernel], text::body(&page.info.kernel_version))
-                        .align_items(Alignment::Center),
-                )
-                .add(
-                    settings::flex_item(
-                        &*desc[desktop],
-                        text::body(&page.info.desktop_environment),
-                    )
-                    .align_items(Alignment::Center),
-                )
-                .add(
-                    settings::flex_item(
-                        &*desc[windowing_system],
+
+            group(
+                &section.title,
+                vec![
+                    detail(&desc[os], text::body(&page.info.operating_system)),
+                    detail(&desc[os_arch], text::body(&page.info.os_architecture)),
+                    detail(&desc[kernel], text::body(&page.info.kernel_version)),
+                    detail(&desc[desktop], text::body(&page.info.desktop_environment)),
+                    detail(
+                        &desc[windowing_system],
                         text::body(&page.info.windowing_system),
-                    )
-                    .align_items(Alignment::Center),
-                )
-                .into()
+                    ),
+                ],
+            )
         })
 }
 
