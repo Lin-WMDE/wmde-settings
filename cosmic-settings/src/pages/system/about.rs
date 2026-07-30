@@ -27,6 +27,14 @@ const LABEL_WIDTH: f32 = 220.0;
 /// the same constant for the device row, which is otherwise far wider than the rest.
 const BLOCK_WIDTH: f32 = 540.0;
 
+/// Width of the device-name field, and of the hint under it.
+///
+/// `editable_input` parks its pencil at the right edge of the field, so the field's width
+/// is the distance between the name and the icon. The hint takes the same width, so field
+/// and hint read as one column instead of the hint sprawling wider than the thing it
+/// explains.
+const FIELD_WIDTH: f32 = 200.0;
+
 #[derive(Clone, Debug)]
 pub enum Message {
     Error(String),
@@ -234,7 +242,10 @@ fn detail<'a, M: 'static>(
         )
         .push(value)
         .spacing(theme::spacing().space_xs)
-        .align_y(Alignment::Center)
+        // Top, not centre: a value taller than one line would otherwise push its label
+        // down into the middle of the cell, away from the line it names. Single-line rows
+        // cannot tell the difference - label and value are the same height.
+        .align_y(Alignment::Start)
         .width(Length::Fill)
         .into()
 }
@@ -287,7 +298,7 @@ fn device() -> Section<crate::pages::Message> {
                 page.editing_device_name,
                 Message::HostnameEdit,
             )
-            .width(250.)
+            .width(FIELD_WIDTH)
             .on_input(Message::HostnameInput)
             .on_unfocus(Message::HostnameSubmit)
             .on_submit(|_| Message::HostnameSubmit);
@@ -296,7 +307,7 @@ fn device() -> Section<crate::pages::Message> {
             // the value cell leaves the label column, and so every colon, where it was.
             let value = widget::column::with_capacity(2)
                 .push(hostname_input)
-                .push(text::caption(&*desc[device_desc]))
+                .push(text::caption(&*desc[device_desc]).width(Length::Fixed(FIELD_WIDTH)))
                 .spacing(theme::spacing().space_xxxs);
 
             block(detail(&desc[device], value)).map(crate::pages::Message::About)
