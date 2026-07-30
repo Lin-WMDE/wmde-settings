@@ -264,6 +264,60 @@ impl cosmic::Application for SettingsApp {
         Some(&self.nav_model)
     }
 
+    /// WMDE: the same navigation list the framework builds, with our own item style.
+    ///
+    /// This is a copy of the default `nav_bar()` (`libcosmic/src/app/mod.rs`) plus the body
+    /// of `From<NavBar> for Container` (`libcosmic/src/widget/nav_bar.rs`), and it exists
+    /// for exactly one reason: that `From` impl hardcodes
+    /// `.style(theme::SegmentedButton::NavBar)` and `NavBar` exposes no way to override it.
+    /// Everything else here - the 32 px rows, the paddings, the scrollable, the 280 px cap
+    /// off the condensed mode - is upstream's, copied verbatim. Keep it that way: if the
+    /// navigation ever looks wrong after a merge, diff it against those two places first.
+    fn nav_bar(&self) -> Option<Element<'_, cosmic::Action<Self::Message>>> {
+        if !self.core().nav_bar_active() {
+            return None;
+        }
+
+        let nav_model = self.nav_model()?;
+        let spacing = cosmic::theme::spacing();
+
+        let nav = segmented_button::vertical(nav_model)
+            .on_activate(|id| cosmic::Action::Cosmic(cosmic::app::Action::NavBar(id)))
+            .on_context(|id| cosmic::Action::Cosmic(cosmic::app::Action::NavBarContext(id)))
+            .context_menu(self.nav_context_menu())
+            .window_id_maybe(self.core().main_window_id())
+            .on_surface_action(|action| {
+                cosmic::Action::Cosmic(cosmic::app::Action::Surface(action))
+            })
+            .button_height(32)
+            .button_padding([
+                spacing.space_s,
+                spacing.space_xxs,
+                spacing.space_s,
+                spacing.space_xxs,
+            ])
+            .button_spacing(spacing.space_xxs)
+            .spacing(spacing.space_xxs)
+            .style(nav_item_style())
+            .apply(container)
+            .padding(spacing.space_xxs)
+            .apply(scrollable)
+            .class(cosmic::style::iced::Scrollable::Minimal)
+            .height(Length::Fill)
+            .apply(container)
+            .height(Length::Fill)
+            .class(cosmic::theme::Container::custom(nav_bar::nav_bar_style))
+            .width(Length::Shrink);
+
+        let nav = if self.core().is_condensed() {
+            nav
+        } else {
+            nav.max_width(280)
+        };
+
+        Some(Element::from(nav))
+    }
+
     fn header_start(&self) -> Vec<Element<'_, Self::Message>> {
         let mut widgets = Vec::new();
 
@@ -1280,4 +1334,64 @@ impl SettingsApp {
             .padding([0, padding, bottom_spacer, padding])
             .into()
     }
+}
+
+/// WMDE: how one row of the navigation list looks.
+///
+/// The list is a flat, square, full-width strip, like the start menu's category list
+/// (`theme::Button::AppletMenu` there) and the Files sidebar. Upstream's
+/// `SegmentedButton::NavBar` is a tab bar in disguise: it rounds items by `radius_m` and
+/// tints text and icon with the accent as soon as an item is hovered or selected.
+///
+/// The four states have to be defined together, they cannot be fixed one at a time. The
+/// widget resolves them in the order `pressed -> hover -> active -> inactive`
+/// (`libcosmic/src/widget/segmented_button/widget.rs`), so **hover wins over active**:
+/// hovering the selected row swaps in the hover appearance, and an accent left on `active`
+/// alone would make the current page flip colour under the cursor.
+///
+/// The fills are upstream's numbers (`neutral_5` at 20/30/25 %). Hover being denser than
+/// the selection is deliberate: the selected row must not dim when the cursor lands on it,
+/// and once the cursor is elsewhere it is the only row with a fill at all.
+fn nav_item_style() -> cosmic::theme::SegmentedButton {
+    use cosmic::iced::{Background, Border, Color};
+    use cosmic::widget::segmented_button::{Appearance, ItemAppearance, ItemStatusAppearance};
+
+    cosmic::theme::SegmentedButton::Custom(Box::new(|theme| {
+        let cosmic = theme.cosmic();
+        let square = ItemAppearance {
+            border: Border {
+                radius: cosmic.corner_radii.radius_0.into(),
+                ..Default::default()
+            },
+        };
+        // Neutral in every state - the container's own foreground colour, the same one an
+        // unhovered row already uses.
+        let text_color = Color::from(theme.current_container().component.on);
+
+        let state = |alpha: Option<f32>| ItemStatusAppearance {
+            background: alpha.map(|alpha| {
+                let mut fill = Color::from(cosmic.palette.neutral_5);
+                fill.a = alpha;
+                Background::Color(fill)
+            }),
+            first: square,
+            middle: square,
+            last: square,
+            text_color,
+        };
+
+        Appearance {
+            background: None,
+            border: Border {
+                radius: cosmic.corner_radii.radius_0.into(),
+                ..Default::default()
+            },
+            // No tab underline: the list marks the current page with its fill.
+            active_width: 0.0,
+            active: state(Some(0.20)),
+            inactive: state(None),
+            hover: state(Some(0.30)),
+            pressed: state(Some(0.25)),
+        }
+    }))
 }
