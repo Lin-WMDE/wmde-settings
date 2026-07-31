@@ -126,12 +126,6 @@ atspi-common = { git = "https://github.com/wash2/atspi" }
 cosmic-randr = { path = "../wmde-randr/lib" }
 cosmic-randr-shell = { path = "../wmde-randr/shell" }
 
-[patch."https://github.com/pop-os/cosmic-randr/"]
-cosmic-randr = { path = "../wmde-randr/lib" }
-cosmic-randr-shell = { path = "../wmde-randr/shell" }
-
-# WMDE: redirect standard D-Bus binding crates to the local wmde-dbus-settings-bindings
-# fork (source-purity; these bind standard freedesktop/system services, identical to pop-os).
 [patch."https://github.com/pop-os/dbus-settings-bindings"]
 accounts-zbus = { path = "../wmde-dbus-settings-bindings/accounts-zbus" }
 bluez-zbus = { path = "../wmde-dbus-settings-bindings/bluez" }
