@@ -229,6 +229,11 @@ impl cosmic::Application for SettingsApp {
         app.insert_page::<power::Page>();
         #[cfg(feature = "page-input")]
         app.insert_page::<input::Page>();
+        // WMDE: shortcuts get their own entry instead of hiding under the keyboard.
+        // They reach past the keyboard - the compositor runs some, applications run
+        // the rest - so a user looking for them has no reason to open input devices.
+        #[cfg(feature = "page-input")]
+        app.insert_page::<input::keyboard::shortcuts::Page>();
         app.insert_page::<applications::Page>();
         app.insert_page::<time::Page>();
         app.insert_page::<system::Page>();

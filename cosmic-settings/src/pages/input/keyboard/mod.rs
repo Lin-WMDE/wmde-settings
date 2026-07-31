@@ -734,11 +734,11 @@ impl Page {
     }
 }
 
-impl page::AutoBind<crate::pages::Message> for Page {
-    fn sub_pages(page: page::Insert<crate::pages::Message>) -> page::Insert<crate::pages::Message> {
-        page.sub_page::<shortcuts::Page>()
-    }
-}
+// WMDE: shortcuts are a top-level entry, not a sub-page of the keyboard - they cover
+// the whole desktop and the applications, not one input device. The module stays here
+// so that upstream keeps merging into it; `keyboard_shortcuts()` below still links to
+// the page, which `app.rs` registers at the root.
+impl page::AutoBind<crate::pages::Message> for Page {}
 
 fn input_sources() -> Section<crate::pages::Message> {
     Section::default()
