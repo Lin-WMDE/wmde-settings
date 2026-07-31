@@ -23,7 +23,8 @@ use cosmic::cosmic_config::{ConfigGet, ConfigSet, CosmicConfigEntry};
 use cosmic::widget::{button, dropdown, settings};
 use cosmic::{Apply, Element, Task, surface};
 use cosmic_panel_config::{
-    CosmicPanelConfig, CosmicPanelContainerConfig, CosmicPanelOuput, PanelAnchor, PanelLook,
+    CosmicPanelConfig, CosmicPanelContainerConfig, CosmicPanelOuput, KeyboardInteractivity,
+    PanelAnchor, PanelLook, PanelSize,
 };
 use cosmic_settings_page::{self as page, Section, section};
 use slotmap::{Key, SlotMap};
@@ -579,6 +580,11 @@ fn create(anchor: PanelAnchor, output: CosmicPanelOuput, look: PanelLook) {
         margin: 0,
         spacing: 0,
         exclusive_zone: true,
+        // Not the compiled-in defaults: those are upstream's, and a panel the user creates
+        // should match the one the packages install. `OnDemand` is the load-bearing one -
+        // without it an applet popup cannot take the keyboard.
+        keyboard_interactivity: KeyboardInteractivity::OnDemand,
+        size: PanelSize::S,
         // A new panel starts empty: what goes on it is the next thing the user does.
         plugins_wings: Some((Vec::new(), Vec::new())),
         plugins_center: Some(Vec::new()),
