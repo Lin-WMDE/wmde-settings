@@ -4,9 +4,10 @@
 use std::str::FromStr;
 use std::time::Duration;
 
-use super::{ShortcutBinding, ShortcutMessage, ShortcutModel};
+use super::{ShortcutBinding, ShortcutMessage, ShortcutModel, catalog};
 
 use cosmic::app::ContextDrawer;
+use cosmic::desktop::IconSourceExt;
 use cosmic::iced::keyboard::key::Named;
 use cosmic::iced::keyboard::{Key, Location, Modifiers};
 use cosmic::iced::platform_specific::shell::wayland::commands::keyboard_shortcuts_inhibit;
@@ -69,11 +70,18 @@ pub enum Message {
     Shortcut(ShortcutMessage),
     /// Open the add shortcut context drawer
     ShortcutContext,
+    /// Narrow the list of things that can be bound
+    CatalogSearch(String),
+    /// Fill the name and the command from the picked entry
+    CatalogPick(usize),
     TabPressed,
     ModifiersChanged(Modifiers),
     KeyReleased(u32, Key, Location),
     KeyPressed(u32, Key, Location, Modifiers),
 }
+
+/// How many matches the picker shows before asking for a narrower search.
+const CATALOG_SHOWN: usize = 8;
 
 #[derive(Default)]
 struct AddShortcut {
@@ -83,6 +91,10 @@ struct AddShortcut {
     pub task: String,
     pub keys: Slab<(String, widget::Id)>,
     pub binding: Binding,
+    /// WMDE: what can be bound, read from installed desktop entries when the
+    /// drawer opens.
+    pub catalog: Vec<catalog::Entry>,
+    pub search: String,
 }
 
 impl AddShortcut {
@@ -90,6 +102,7 @@ impl AddShortcut {
         self.active = true;
         self.name.clear();
         self.task.clear();
+        self.search.clear();
 
         if self.keys.is_empty() {
             self.keys.insert((String::new(), widget::Id::unique()));
@@ -215,9 +228,24 @@ impl Page {
                 return self.model.update(message);
             }
 
+            Message::CatalogSearch(search) => {
+                self.add_shortcut.search = search;
+            }
+
+            Message::CatalogPick(index) => {
+                if let Some(entry) = self.add_shortcut.catalog.get(index) {
+                    self.add_shortcut.name = entry.name.clone();
+                    self.add_shortcut.task = entry.command.clone();
+                }
+            }
+
             Message::ShortcutContext => {
                 let name_id = self.name_id.clone();
                 self.add_shortcut.enable();
+                // Reading the disk here rather than on every view: the drawer is the
+                // only place the list is needed, and it is opened deliberately.
+                self.add_shortcut.catalog =
+                    catalog::load(&cosmic::desktop::fde::get_languages_from_env());
                 return Task::batch(vec![
                     cosmic::task::message(crate::app::Message::OpenContextDrawer(self.entity)),
                     // XX hack: wait a bit before focusing the input to avoid it being ignored before it exists
@@ -422,6 +450,77 @@ impl Page {
         ])
     }
 
+    /// Picks what to bind: an installed application, or an action one declares.
+    ///
+    /// Fills the two fields below rather than replacing them, so that a picked
+    /// command can still be edited and a command nothing declares can still be
+    /// typed by hand.
+    fn catalog_picker(&self) -> Element<'_, Message> {
+        let search = self.add_shortcut.search.to_lowercase();
+        let matched: Vec<(usize, &catalog::Entry)> = self
+            .add_shortcut
+            .catalog
+            .iter()
+            .enumerate()
+            .filter(|(_, entry)| search.is_empty() || entry.matches(&search))
+            .collect();
+
+        let mut list = widget::list_column();
+        for (index, entry) in matched.iter().take(CATALOG_SHOWN) {
+            let label = match &entry.application {
+                Some(application) => widget::column::with_capacity(2)
+                    .push(widget::text::body(&entry.name))
+                    .push(widget::text::caption(application))
+                    .into(),
+                None => Element::from(widget::text::body(&entry.name)),
+            };
+
+            list = list.add(
+                widget::row::with_capacity(2)
+                    .spacing(12)
+                    .align_y(Alignment::Center)
+                    .push(widget::icon(entry.icon.as_cosmic_icon()).size(24))
+                    .push(label)
+                    .apply(widget::button::custom)
+                    .class(cosmic::theme::Button::MenuItem)
+                    .padding([8, 16])
+                    .width(Length::Fill)
+                    .on_press(Message::CatalogPick(*index)),
+            );
+        }
+
+        let hint = if matched.is_empty() {
+            Some(widget::text::caption(fl!("shortcut-catalog", "none")))
+        } else if matched.len() > CATALOG_SHOWN {
+            let hidden: usize = matched.len() - CATALOG_SHOWN;
+            Some(widget::text::caption(fl!(
+                "shortcut-catalog",
+                "more",
+                count = hidden
+            )))
+        } else {
+            None
+        };
+
+        let mut column = widget::column::with_capacity(4)
+            .spacing(4)
+            .push(widget::text::body(fl!("shortcut-catalog")))
+            .push(
+                widget::search_input(fl!("shortcut-catalog", "search"), &self.add_shortcut.search)
+                    .on_input(Message::CatalogSearch)
+                    .on_clear(Message::CatalogSearch(String::new())),
+            );
+
+        if !matched.is_empty() {
+            column = column.push(list);
+        }
+        if let Some(hint) = hint {
+            column = column.push(hint);
+        }
+
+        column.into()
+    }
+
     fn add_keybinding_context(&self) -> Element<'_, Message> {
         let name_input = widget::text_input("", &self.add_shortcut.name)
             .padding([6, 12])
@@ -445,8 +544,9 @@ impl Page {
             .push(widget::text::body(fl!("command")))
             .push(task_input);
 
-        let input_fields = widget::column::with_capacity(2)
+        let input_fields = widget::column::with_capacity(3)
             .spacing(12)
+            .push(self.catalog_picker())
             .push(name_control)
             .push(command_control)
             .padding([16, 24]);

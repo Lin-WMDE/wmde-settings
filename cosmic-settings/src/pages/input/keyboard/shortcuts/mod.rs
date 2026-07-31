@@ -6,6 +6,9 @@ mod common;
 pub use common::{Model, ShortcutBinding, ShortcutMessage, ShortcutModel};
 
 pub mod accessibility;
+// WMDE: what a custom shortcut can be bound to, so that a command is picked rather
+// than typed from memory.
+pub mod catalog;
 pub mod custom;
 pub mod manage_windows;
 pub mod move_window;

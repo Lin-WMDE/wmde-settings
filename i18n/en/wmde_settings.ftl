@@ -797,6 +797,12 @@ custom-shortcuts = Custom shortcuts
     .context = Add custom shortcut
     .none = No custom shortcuts
 
+# WMDE: picking what to bind a key to, instead of typing a command from memory.
+shortcut-catalog = Application or action
+    .search = Search
+    .none = Nothing matches
+    .more = { $count } more, keep typing to narrow it down
+
 modified = { $count } modified
 
 nav-shortcuts = Navigation
