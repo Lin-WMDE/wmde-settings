@@ -120,12 +120,7 @@ impl Page {
 
             Message::TextEditing { slot, editing, .. } => {
                 if editing {
-                    let current = self
-                        .values
-                        .get(slot)
-                        .and_then(Option::as_deref)
-                        .and_then(store::as_text)
-                        .unwrap_or_default();
+                    let current = self.text_value(slot);
                     self.editing = Some((slot, current));
                 } else {
                     self.commit_text(slot);
@@ -156,11 +151,30 @@ impl Page {
     }
 
     fn commit_text(&mut self, slot: usize) {
-        if let Some((editing, text)) = self.editing.take()
-            && editing == slot
-        {
-            self.write(slot, store::format_text(&text));
+        let Some((editing, text)) = self.editing.take() else {
+            return;
+        };
+
+        // Nothing changed, so nothing is written. Without this, giving a text field the
+        // focus and clicking away would turn "never set" into an empty string and lose
+        // the default the applet would otherwise have used.
+        if editing != slot || text == self.text_value(slot) {
+            return;
         }
+
+        self.write(slot, store::format_text(&text));
+    }
+
+    /// The string a text field shows: what is stored, else what the schema declares.
+    fn text_value(&self, slot: usize) -> String {
+        let declared = self.setting(slot).and_then(|setting| setting.default.as_deref());
+
+        self.values
+            .get(slot)
+            .and_then(Option::as_deref)
+            .or(declared)
+            .and_then(store::as_text)
+            .unwrap_or_default()
     }
 
     /// Put every key the schema names back to the value the applet's package installed,
@@ -398,6 +412,95 @@ fn reset_section() -> Section<crate::pages::Message> {
                 )
                 .into()
         })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const SCHEMA: &str = r#"
+(
+    schema: 1,
+    config: (id: "fun.example.Test", version: 1),
+    groups: [(
+        title: { "": "G" },
+        rows: [Setting(
+            key: "city",
+            label: { "": "City" },
+            control: Text(max_len: 64),
+            default: "\"Kyiv\"",
+        )],
+    )],
+)
+"#;
+
+    fn page() -> Page {
+        let schema = super::super::schema::discover::parse(SCHEMA, &[]).expect("schema parses");
+        Page::new("panel_applets", Applet::default(), Some(schema))
+    }
+
+    /// Focusing a text field and leaving it must not overwrite anything.
+    ///
+    /// The draft is seeded from the value in force - the schema's default when nothing is
+    /// stored - so an untouched field commits the value it already had, and the commit is
+    /// skipped. Seeding from the stored value alone turned "never set" into an empty
+    /// string, which would have blanked a city name the applet was relying on.
+    #[test]
+    fn an_untouched_text_field_writes_nothing() {
+        let mut page = page();
+        let entity = page.entity();
+
+        page.update(Message::TextEditing {
+            page: entity,
+            slot: 0,
+            editing: true,
+        });
+        assert_eq!(page.draft(0), Some("Kyiv"), "seeded from the schema default");
+
+        page.update(Message::TextEditing {
+            page: entity,
+            slot: 0,
+            editing: false,
+        });
+        assert_eq!(page.draft(0), None, "editing ended");
+        assert_eq!(page.values()[0], None, "and nothing was stored");
+    }
+
+    #[test]
+    fn a_cleared_text_field_is_a_real_change() {
+        let mut page = page();
+        let entity = page.entity();
+
+        page.update(Message::TextEditing {
+            page: entity,
+            slot: 0,
+            editing: true,
+        });
+        page.update(Message::TextDraft {
+            page: entity,
+            slot: 0,
+            text: String::new(),
+        });
+
+        assert_eq!(page.draft(0), Some(""));
+        // Deliberately emptying the field differs from the value in force, so it would be
+        // written; there is no store here, so only the intent is asserted.
+        assert_ne!(page.draft(0).unwrap(), page.text_value(0));
+    }
+
+    #[test]
+    fn max_len_is_enforced_while_typing() {
+        let mut page = page();
+        let entity = page.entity();
+
+        page.update(Message::TextDraft {
+            page: entity,
+            slot: 0,
+            text: "x".repeat(100),
+        });
+
+        assert_eq!(page.draft(0).map(str::len), Some(64));
+    }
 }
 
 /// A section that states why there is nothing to configure.

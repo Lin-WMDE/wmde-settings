@@ -1,0 +1,135 @@
+// A settings schema that uses every control the WMDE vocabulary has.
+//
+// Installed to /usr/share/wmde/applet-settings/fun.example.AppletHello.ron, this file is
+// the whole of the integration: WMDE Settings is not rebuilt, not patched, and knows
+// nothing about this applet.
+//
+// The "" key of every label is the mandatory English fallback. Add as many languages as
+// you like; a missing one falls back to "".
+(
+    // Version of the schema LANGUAGE, not of your applet. Leave it at 1.
+    schema: 1,
+
+    // Which config this page edits. Usually your applet's own id and config version.
+    config: (id: "fun.example.AppletHello", version: 1),
+
+    groups: [
+        (
+            title: { "": "Switches and choices", "uk": "Перемикачі та вибір" },
+            rows: [
+                Setting(
+                    key: "greet",
+                    label: { "": "Say hello", "uk": "Вітатися" },
+                    description: {
+                        "": "A description is optional and sits under the label.",
+                        "uk": "Опис необовʼязковий і стоїть під підписом.",
+                    },
+                    control: Toggle,
+                    default: "true",
+                ),
+
+                // Four options or fewer become radio buttons; five or more become a
+                // dropdown. Say `style: Radio` or `style: Dropdown` to decide yourself.
+                Setting(
+                    key: "mood",
+                    label: { "": "Mood", "uk": "Настрій" },
+                    control: Choice(items: [
+                        (value: "Cheerful", label: { "": "Cheerful", "uk": "Бадьорий" }),
+                        (value: "Neutral",  label: { "": "Neutral",  "uk": "Нейтральний" }),
+                        (value: "Grumpy",   label: { "": "Grumpy",   "uk": "Буркотливий" }),
+                    ]),
+                    default: "Neutral",
+                ),
+
+                // A choice value is raw RON text, so it can be any shape your field
+                // deserialises - including Option<T>, which the vocabulary never mentions.
+                Setting(
+                    key: "language",
+                    label: { "": "Force a language", "uk": "Примусова мова" },
+                    control: Choice(style: Dropdown, items: [
+                        (value: "None",         label: { "": "Follow the system", "uk": "Як у системі" }),
+                        (value: "Some(\"en\")", label: { "": "English",           "uk": "Англійська" }),
+                        (value: "Some(\"uk\")", label: { "": "Ukrainian",         "uk": "Українська" }),
+                        (value: "Some(\"pl\")", label: { "": "Polish",            "uk": "Польська" }),
+                        (value: "Some(\"de\")", label: { "": "German",            "uk": "Німецька" }),
+                    ]),
+                    default: "None",
+                ),
+            ],
+        ),
+        (
+            title: { "": "Numbers", "uk": "Числа" },
+            rows: [
+                // decimals: 0 is the default and writes a whole number, which is what a
+                // u32 field needs - it cannot read 3.0.
+                Setting(
+                    key: "repeats",
+                    label: { "": "Repeat the greeting", "uk": "Повторити вітання" },
+                    control: Number(
+                        min: 1, max: 10,
+                        suffix: { "": "times", "uk": "разів" },
+                    ),
+                    default: "1",
+                ),
+
+                // optional: true is for an Option<T> key. The toggle is how the page says
+                // "no value at all", which a bounded spin button cannot express.
+                Setting(
+                    key: "timeout_ms",
+                    label: { "": "Give up after", "uk": "Здаватися через" },
+                    description: {
+                        "": "Switch it off to wait forever.",
+                        "uk": "Вимкніть, щоб чекати вічно.",
+                    },
+                    control: Number(
+                        min: 500, max: 30000, step: 500, optional: true,
+                        suffix: { "": "ms", "uk": "мс" },
+                    ),
+                    default: "None",
+                ),
+
+                Setting(
+                    key: "volume",
+                    label: { "": "Loudness", "uk": "Гучність" },
+                    control: Slider(
+                        min: 0.0, max: 1.0, step: 0.05, decimals: 2,
+                        min_label: { "": "quiet", "uk": "тихо" },
+                        max_label: { "": "loud",  "uk": "гучно" },
+                    ),
+                    default: "0.5",
+                ),
+            ],
+        ),
+        (
+            title: { "": "Text, and the way out", "uk": "Текст і вихід назовні" },
+            rows: [
+                // A string is stored quoted; the default below is the RON text, quotes
+                // and all. The page does the quoting for you when the user types.
+                Setting(
+                    key: "name",
+                    label: { "": "Who to greet", "uk": "Кого вітати" },
+                    control: Text(placeholder: { "": "world", "uk": "світе" }, max_len: 32),
+                    default: "\"world\"",
+                ),
+
+                // Prose. Use it for a setting that exists but is not editable here.
+                Note(text: {
+                    "": "The greeting history is kept automatically and cannot be edited.",
+                    "uk": "Історія вітань ведеться сама і не редагується.",
+                }),
+
+                // A jump to a page of Settings, named by that page's id.
+                Link(page: "appearance", label: {
+                    "": "Colours and fonts",
+                    "uk": "Кольори та шрифти",
+                }),
+
+                // A jump out of Settings, for what a schema cannot describe.
+                External(exec: "/usr/bin/true", label: {
+                    "": "Advanced setup",
+                    "uk": "Додаткові налаштування",
+                }),
+            ],
+        ),
+    ],
+)

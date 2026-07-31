@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Hello (settings example)
+Comment=Demonstrates the WMDE applet settings schema
+Type=Application
+Exec=/usr/bin/true
+Terminal=false
+Categories=WMDE;
+Keywords=WMDE;Applet;Example;
+Icon=face-smile-symbolic
+NoDisplay=true
+X-CosmicApplet=true

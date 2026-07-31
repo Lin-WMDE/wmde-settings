@@ -1,0 +1,22 @@
+# Maintainer: WMDE
+#
+# A settings schema with no applet behind it. Installing this package is the proof that
+# WMDE Settings needs no knowledge of an applet to configure it: nothing is rebuilt, and
+# the page appears on the next start of Settings.
+pkgname=wmde-applet-hello
+pkgver=1
+pkgrel=1
+pkgdesc='Example applet settings schema for WMDE'
+arch=('any')
+url='https://github.com/Lin-WMDE'
+license=('GPL-3.0-only')
+depends=('wmde-settings')
+source=('fun.example.AppletHello.desktop' 'fun.example.AppletHello.ron')
+sha256sums=('SKIP' 'SKIP')
+
+package() {
+  install -Dm0644 "$srcdir/fun.example.AppletHello.desktop" \
+    "$pkgdir/usr/share/applications/fun.example.AppletHello.desktop"
+  install -Dm0644 "$srcdir/fun.example.AppletHello.ron" \
+    "$pkgdir/usr/share/wmde/applet-settings/fun.example.AppletHello.ron"
+}
