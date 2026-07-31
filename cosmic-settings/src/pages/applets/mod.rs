@@ -55,6 +55,41 @@ pub enum Message {
         slot: usize,
         item: usize,
     },
+    Number {
+        page: page::Entity,
+        slot: usize,
+        value: f64,
+    },
+    /// The toggle beside an optional number: off means the key holds `None`.
+    NumberEnabled {
+        page: page::Entity,
+        slot: usize,
+        enabled: bool,
+    },
+    Slide {
+        page: page::Entity,
+        slot: usize,
+        value: f64,
+    },
+    /// Keystrokes in a text field. Not written yet - see [`Self::TextCommit`].
+    TextDraft {
+        page: page::Entity,
+        slot: usize,
+        text: String,
+    },
+    TextEditing {
+        page: page::Entity,
+        slot: usize,
+        editing: bool,
+    },
+    TextCommit {
+        page: page::Entity,
+        slot: usize,
+    },
+    /// Put every key the schema names back to the value the package installed.
+    Reset {
+        page: page::Entity,
+    },
     /// A dropdown's popup surface. Not tied to a page - it goes straight to the shell.
     Surface(surface::Action),
 }
@@ -63,7 +98,15 @@ impl Message {
     /// The page this message belongs to, if it belongs to one.
     fn entity(&self) -> Option<page::Entity> {
         match self {
-            Self::Toggle { page, .. } | Self::Choose { page, .. } => Some(*page),
+            Self::Toggle { page, .. }
+            | Self::Choose { page, .. }
+            | Self::Number { page, .. }
+            | Self::NumberEnabled { page, .. }
+            | Self::Slide { page, .. }
+            | Self::TextDraft { page, .. }
+            | Self::TextEditing { page, .. }
+            | Self::TextCommit { page, .. }
+            | Self::Reset { page } => Some(*page),
             Self::Surface(_) => None,
         }
     }

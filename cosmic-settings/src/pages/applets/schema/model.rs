@@ -76,6 +76,42 @@ pub enum Control {
         items: Vec<ChoiceItem>,
         style: ChoiceStyle,
     },
+    Number(Number),
+    Slider(Slider),
+    Text(TextField),
+}
+
+/// A number entered with a spin button.
+///
+/// Everything is carried as `f64` and written back with `decimals` digits, so one code
+/// path serves both `6` and `50.4501`; a schema declaring `decimals: 0` gets an integer
+/// on disk, which is what an applet deserialising into `u32` requires.
+#[derive(Clone)]
+pub struct Number {
+    pub min: f64,
+    pub max: f64,
+    pub step: f64,
+    pub decimals: u8,
+    /// The key holds `None` or `Some(x)` rather than a bare number. The row then carries
+    /// a toggle as well, because "no limit" is a value the spin button cannot express.
+    pub optional: bool,
+    pub suffix: Option<String>,
+}
+
+#[derive(Clone)]
+pub struct Slider {
+    pub min: f64,
+    pub max: f64,
+    pub step: f64,
+    pub decimals: u8,
+    pub min_label: Option<String>,
+    pub max_label: Option<String>,
+}
+
+#[derive(Clone)]
+pub struct TextField {
+    pub placeholder: Option<String>,
+    pub max_len: Option<usize>,
 }
 
 #[derive(Clone)]
@@ -154,6 +190,42 @@ pub mod raw {
             #[serde(default)]
             style: super::ChoiceStyle,
         },
+        Number {
+            min: f64,
+            max: f64,
+            #[serde(default = "one")]
+            step: f64,
+            #[serde(default)]
+            decimals: u8,
+            #[serde(default)]
+            optional: bool,
+            #[serde(default)]
+            suffix: Option<L10n>,
+        },
+        Slider {
+            min: f64,
+            max: f64,
+            #[serde(default = "one")]
+            step: f64,
+            #[serde(default)]
+            decimals: u8,
+            #[serde(default)]
+            min_label: Option<L10n>,
+            #[serde(default)]
+            max_label: Option<L10n>,
+        },
+        Text {
+            #[serde(default)]
+            placeholder: Option<L10n>,
+            #[serde(default)]
+            max_len: Option<usize>,
+        },
+    }
+
+    /// A step of zero would freeze the control, so the default is one rather than
+    /// `f64::default()`.
+    fn one() -> f64 {
+        1.0
     }
 
     #[derive(Debug, Deserialize)]

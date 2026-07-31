@@ -9,7 +9,9 @@
 //! `~/.local/share` while writing one.
 
 use super::l10n;
-use super::model::{ChoiceItem, Control, Group, Row, SUPPORTED, Schema, Setting, raw};
+use super::model::{
+    ChoiceItem, Control, Group, Number, Row, SUPPORTED, Schema, Setting, Slider, TextField, raw,
+};
 use freedesktop_desktop_entry::get_languages_from_env;
 use ron::value::RawValue;
 use std::collections::HashMap;
@@ -210,7 +212,66 @@ fn convert_control(control: raw::Control, languages: &[String], key: &str) -> Op
             let style = style.resolve(items.len());
             Some(Control::Choice { items, style })
         }
+
+        raw::Control::Number {
+            min,
+            max,
+            step,
+            decimals,
+            optional,
+            suffix,
+        } => {
+            let (min, max, step) = range(min, max, step, key)?;
+            Some(Control::Number(Number {
+                min,
+                max,
+                step,
+                decimals,
+                optional,
+                suffix: l10n::resolve_opt(suffix.as_ref(), languages),
+            }))
+        }
+
+        raw::Control::Slider {
+            min,
+            max,
+            step,
+            decimals,
+            min_label,
+            max_label,
+        } => {
+            let (min, max, step) = range(min, max, step, key)?;
+            Some(Control::Slider(Slider {
+                min,
+                max,
+                step,
+                decimals,
+                min_label: l10n::resolve_opt(min_label.as_ref(), languages),
+                max_label: l10n::resolve_opt(max_label.as_ref(), languages),
+            }))
+        }
+
+        raw::Control::Text {
+            placeholder,
+            max_len,
+        } => Some(Control::Text(TextField {
+            placeholder: l10n::resolve_opt(placeholder.as_ref(), languages),
+            max_len,
+        })),
     }
+}
+
+/// Reject a range the control cannot be driven through.
+///
+/// A reversed range or a zero step produces a widget that looks operable and is not, which
+/// is worse than an absent row: the user would keep clicking a control that cannot move.
+fn range(min: f64, max: f64, step: f64, key: &str) -> Option<(f64, f64, f64)> {
+    if !min.is_finite() || !max.is_finite() || !step.is_finite() || min > max || step <= 0.0 {
+        warn!(key, min, max, step, "dropping setting: unusable range");
+        return None;
+    }
+
+    Some((min, max, step))
 }
 
 /// Is this text something the config layer can store?
@@ -313,6 +374,42 @@ mod tests {
         assert_eq!(schema.groups[0].title, "Behaviour");
     }
 
+    /// Parse every schema in the directory named by `WMDE_APPLET_SCHEMA_DIR`.
+    ///
+    /// Aims the real parser at the files a package actually ships, which the fixtures
+    /// above cannot do - they are written to exercise the parser, not to match what is
+    /// installed. Without the variable this is a no-op, so `cargo test` never depends on
+    /// where a checkout happens to sit.
+    #[test]
+    fn shipped_schemas_parse() {
+        let Some(dir) = std::env::var_os("WMDE_APPLET_SCHEMA_DIR") else {
+            return;
+        };
+
+        let entries = std::fs::read_dir(&dir).expect("schema directory must be readable");
+        let mut checked = 0;
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().is_none_or(|ext| ext != "ron") {
+                continue;
+            }
+
+            let text = std::fs::read_to_string(&path).expect("schema must be readable");
+            let schema = parse(&text, &languages())
+                .unwrap_or_else(|err| panic!("{}: {err}", path.display()));
+
+            assert!(
+                !schema.groups.is_empty() && !schema.too_new,
+                "{}: nothing left after parsing - every row was dropped",
+                path.display()
+            );
+            checked += 1;
+        }
+
+        assert!(checked > 0, "{dir:?} held no schemas");
+    }
+
     #[test]
     fn a_schema_from_the_future_still_produces_a_page() {
         let text = r#"(schema: 99, config: (id: "x", version: 1), groups: [])"#;
@@ -359,6 +456,86 @@ mod tests {
         let schema = parse(text, &languages()).expect("schema parses");
         assert!(schema.groups.is_empty(), "an empty group is not rendered");
         assert_eq!(schema.slots, 0, "a dropped setting claims no slot");
+    }
+
+    #[test]
+    fn numbers_sliders_and_text_parse() {
+        let text = r#"
+(
+    schema: 1,
+    config: (id: "x", version: 1),
+    groups: [(
+        title: { "": "G" },
+        rows: [
+            Setting(key: "a", label: { "": "A" }, control: Number(
+                min: 500, max: 60000, step: 500, optional: true,
+                suffix: { "": "ms", "uk": "мс" },
+            ), default: "Some(5000)"),
+            Setting(key: "b", label: { "": "B" }, control: Slider(
+                min: 0.0, max: 1.0, step: 0.05, decimals: 2,
+                min_label: { "": "quiet" }, max_label: { "": "loud" },
+            )),
+            Setting(key: "c", label: { "": "C" }, control: Text(max_len: 64)),
+        ],
+    )],
+)
+"#;
+        let schema = parse(text, &languages()).expect("schema parses");
+        let rows = &schema.groups[0].rows;
+        assert_eq!(rows.len(), 3);
+        assert_eq!(schema.slots, 3);
+
+        let Row::Setting(number) = &rows[0] else {
+            panic!("expected a setting");
+        };
+        let Control::Number(number_control) = &number.control else {
+            panic!("expected a number");
+        };
+        assert!(number_control.optional);
+        assert_eq!(number_control.step, 500.0);
+        assert_eq!(number_control.decimals, 0, "decimals default to whole numbers");
+        assert_eq!(number_control.suffix.as_deref(), Some("мс"));
+        assert_eq!(number.default.as_deref(), Some("Some(5000)"));
+
+        let Row::Setting(slider) = &rows[1] else {
+            panic!("expected a setting");
+        };
+        let Control::Slider(slider_control) = &slider.control else {
+            panic!("expected a slider");
+        };
+        assert_eq!(slider_control.decimals, 2);
+        assert_eq!(slider_control.min_label.as_deref(), Some("quiet"));
+
+        let Row::Setting(field) = &rows[2] else {
+            panic!("expected a setting");
+        };
+        let Control::Text(text_control) = &field.control else {
+            panic!("expected a text field");
+        };
+        assert_eq!(text_control.max_len, Some(64));
+        assert!(text_control.placeholder.is_none());
+    }
+
+    #[test]
+    fn an_unusable_range_drops_the_setting() {
+        let template = |control: &str| {
+            format!(
+                r#"(schema: 1, config: (id: "x", version: 1), groups: [(
+                    title: {{ "": "G" }},
+                    rows: [Setting(key: "k", label: {{ "": "L" }}, control: {control})],
+                )])"#
+            )
+        };
+
+        for control in [
+            "Number(min: 10, max: 1)",
+            "Number(min: 0, max: 10, step: 0)",
+            "Slider(min: 0, max: 10, step: -1)",
+        ] {
+            let schema = parse(&template(control), &languages()).expect("schema parses");
+            assert!(schema.groups.is_empty(), "{control} should have been dropped");
+            assert_eq!(schema.slots, 0);
+        }
     }
 
     #[test]

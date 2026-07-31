@@ -64,6 +64,18 @@ impl Store {
             .map(|value| value.get_ron().trim().to_owned())
     }
 
+    /// The value the applet's package installed, which is what "reset" restores.
+    ///
+    /// Reset writes this rather than deleting the key file: the derive behind
+    /// `CosmicConfigEntry` keeps the previous value in memory when a key fails to read,
+    /// so a deletion would not reach a running applet until the next login.
+    pub fn system_default(&self, key: &str) -> Option<String> {
+        self.config
+            .get_system_default::<Box<RawValue>>(key)
+            .ok()
+            .map(|value| value.get_ron().trim().to_owned())
+    }
+
     /// Write raw RON text to one key. Returns whether it landed.
     pub fn write(&self, key: &str, text: &str) -> bool {
         // A typo in a schema key is worth shouting about: an owner that declares
@@ -156,6 +168,54 @@ pub fn as_bool(text: &str) -> Option<bool> {
     }
 }
 
+/// Read a number out of raw RON text.
+///
+/// Everything numeric is carried as `f64` so that one spin button serves both an integer
+/// key and a decimal one; `format_number` puts the declared number of digits back.
+pub fn as_number(text: &str) -> Option<f64> {
+    ron::from_str::<f64>(text.trim()).ok()
+}
+
+/// Read an optional number: `None`, or `Some(x)`.
+///
+/// The outer `Option` is "is this text readable at all", the inner one is the value.
+pub fn as_optional_number(text: &str) -> Option<Option<f64>> {
+    ron::from_str::<Option<f64>>(text.trim()).ok()
+}
+
+/// Read a string, dropping the RON quoting and escapes.
+pub fn as_text(text: &str) -> Option<String> {
+    ron::from_str::<String>(text.trim()).ok()
+}
+
+/// Render a number for the config, with the digits the schema declared.
+///
+/// An applet whose field is an integer type cannot deserialise `3.0`, so a schema saying
+/// `decimals: 0` must produce `3`.
+pub fn format_number(value: f64, decimals: u8) -> String {
+    if decimals == 0 {
+        format!("{}", value.round() as i64)
+    } else {
+        format!("{value:.*}", usize::from(decimals))
+    }
+}
+
+/// Render an optional number: `None` or `Some(x)`.
+pub fn format_optional_number(value: Option<f64>, decimals: u8) -> String {
+    match value {
+        Some(value) => format!("Some({})", format_number(value, decimals)),
+        None => "None".to_owned(),
+    }
+}
+
+/// Render a string as RON, quoted and escaped.
+///
+/// Hand-rolled quoting would break on the first quotation mark or backslash a user types
+/// into a city name, so the RON serialiser does it.
+pub fn format_text(value: &str) -> String {
+    ron::to_string(&value).unwrap_or_else(|_| String::from("\"\""))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -183,5 +243,38 @@ mod tests {
         assert_eq!(as_bool("true"), Some(true));
         assert_eq!(as_bool(" false "), Some(false));
         assert_eq!(as_bool("Celsius"), None);
+    }
+
+    #[test]
+    fn numbers_survive_the_round_trip() {
+        assert_eq!(as_number("6"), Some(6.0));
+        assert_eq!(as_number("50.4501"), Some(50.4501));
+        assert_eq!(as_number("Celsius"), None);
+
+        // An applet with a `u32` field cannot read `3.0`, so a whole number stays whole.
+        assert_eq!(format_number(3.0, 0), "3");
+        assert_eq!(format_number(2.6, 0), "3");
+        assert_eq!(format_number(50.45012, 4), "50.4501");
+    }
+
+    #[test]
+    fn optional_numbers_keep_the_none_case() {
+        assert_eq!(as_optional_number("None"), Some(None));
+        assert_eq!(as_optional_number("Some(5000)"), Some(Some(5000.0)));
+        assert_eq!(as_optional_number("nonsense"), None);
+
+        assert_eq!(format_optional_number(None, 0), "None");
+        assert_eq!(format_optional_number(Some(5000.0), 0), "Some(5000)");
+    }
+
+    #[test]
+    fn text_is_quoted_and_escaped_by_ron() {
+        assert_eq!(as_text("\"Kyiv\""), Some("Kyiv".to_owned()));
+        assert_eq!(format_text("Kyiv"), "\"Kyiv\"");
+
+        // The characters that would break hand-rolled quoting.
+        let awkward = "say \"hi\"\\";
+        let encoded = format_text(awkward);
+        assert_eq!(as_text(&encoded).as_deref(), Some(awkward));
     }
 }

@@ -9,19 +9,18 @@
 //! `.doc/appearance` is to own no measurements of our own.
 
 use super::Message;
-use super::schema::model::{ChoiceStyle, Control, Group, Row, Setting};
+use super::applet::Page;
+use super::schema::model::{
+    ChoiceItem, ChoiceStyle, Control, Group, Number, Row, Setting, Slider, TextField,
+};
 use super::store;
+use cosmic::iced::{Alignment, Length};
 use cosmic::widget::list::list_column::IntoListItem;
-use cosmic::widget::{column, dropdown, settings, text};
-use cosmic::{Apply, Element};
-use cosmic_settings_page as page;
+use cosmic::widget::{column, dropdown, row, settings, slider, text, toggler};
+use cosmic::{Apply, Element, theme, widget};
 
 /// Render one group as one settings card.
-pub fn group<'a>(
-    group: &'a Group,
-    values: &'a [Option<String>],
-    entity: page::Entity,
-) -> Element<'a, crate::pages::Message> {
+pub fn group<'a>(group: &'a Group, page: &'a Page) -> Element<'a, crate::pages::Message> {
     let mut section = settings::section().title(group.title.as_str());
 
     for row in &group.rows {
@@ -29,10 +28,10 @@ pub fn group<'a>(
             Row::Note(text) => section.add(text::caption(text.as_str())),
 
             Row::Setting(setting) => match &setting.control {
-                Control::Toggle => section.add(toggle(setting, values, entity)),
+                Control::Toggle => section.add(toggle(setting, page)),
 
                 Control::Choice { items, style } if *style == ChoiceStyle::Dropdown => {
-                    section.add(choice_dropdown(setting, items, values, entity))
+                    section.add(choice_dropdown(setting, items, page))
                 }
 
                 Control::Choice { items, .. } => {
@@ -40,10 +39,14 @@ pub fn group<'a>(
                     // group, which may hold more than this one question.
                     let mut section = section.add(heading(setting));
                     for (index, item) in items.iter().enumerate() {
-                        section = section.add(choice_radio(setting, items, index, item, values, entity));
+                        section = section.add(choice_radio(setting, items, index, item, page));
                     }
                     section
                 }
+
+                Control::Number(number) => section.add(number_row(setting, number, page)),
+                Control::Slider(config) => section.add(slider_row(setting, config, page)),
+                Control::Text(field) => section.add(text_row(setting, field, page)),
             },
         };
     }
@@ -51,15 +54,11 @@ pub fn group<'a>(
     section.into()
 }
 
-fn toggle<'a>(
-    setting: &'a Setting,
-    values: &'a [Option<String>],
-    entity: page::Entity,
-) -> impl IntoListItem<'a, crate::pages::Message> + 'a {
-    let is_on = current(setting, values)
+fn toggle<'a>(setting: &'a Setting, page: &'a Page) -> impl IntoListItem<'a, crate::pages::Message> {
+    let is_on = current(setting, page)
         .and_then(store::as_bool)
         .unwrap_or(false);
-    let slot = setting.slot;
+    let (slot, entity) = (setting.slot, page.entity());
 
     labelled(setting).toggler(is_on, move |value| {
         Message::Toggle {
@@ -94,31 +93,33 @@ fn heading(setting: &Setting) -> Element<'_, crate::pages::Message> {
 
 fn choice_radio<'a>(
     setting: &'a Setting,
-    items: &'a [super::schema::model::ChoiceItem],
+    items: &'a [ChoiceItem],
     index: usize,
-    item: &'a super::schema::model::ChoiceItem,
-    values: &'a [Option<String>],
-    entity: page::Entity,
+    item: &'a ChoiceItem,
+    page: &'a Page,
 ) -> impl IntoListItem<'a, crate::pages::Message> + 'a {
-    let slot = setting.slot;
+    let (slot, entity) = (setting.slot, page.entity());
 
-    settings::item::builder(item.label.as_str()).radio(index, selected(setting, items, values), move |item| {
-        Message::Choose {
-            page: entity,
-            slot,
-            item,
-        }
-        .into()
-    })
+    settings::item::builder(item.label.as_str()).radio(
+        index,
+        selected(setting, items, page),
+        move |item| {
+            Message::Choose {
+                page: entity,
+                slot,
+                item,
+            }
+            .into()
+        },
+    )
 }
 
 fn choice_dropdown<'a>(
     setting: &'a Setting,
-    items: &'a [super::schema::model::ChoiceItem],
-    values: &'a [Option<String>],
-    entity: page::Entity,
+    items: &'a [ChoiceItem],
+    page: &'a Page,
 ) -> impl IntoListItem<'a, crate::pages::Message> + 'a {
-    let slot = setting.slot;
+    let (slot, entity) = (setting.slot, page.entity());
     // Owned, not borrowed: `popup_dropdown` requires `S: 'static` because the popup
     // surface outlives this view.
     let labels: Vec<String> = items.iter().map(|item| item.label.clone()).collect();
@@ -127,7 +128,7 @@ fn choice_dropdown<'a>(
     // and a plain dropdown clips its list inside it.
     let control = dropdown::popup_dropdown(
         labels,
-        selected(setting, items, values),
+        selected(setting, items, page),
         move |item| {
             Message::Choose {
                 page: entity,
@@ -144,16 +145,164 @@ fn choice_dropdown<'a>(
     labelled(setting).control(control)
 }
 
+fn number_row<'a>(
+    setting: &'a Setting,
+    number: &'a Number,
+    page: &'a Page,
+) -> impl IntoListItem<'a, crate::pages::Message> + 'a {
+    let (slot, entity) = (setting.slot, page.entity());
+    let value = current_number(setting, page, number.optional);
+
+    let spin = |value: f64| {
+        widget::spin_button(
+            display_number(value, number.decimals, number.suffix.as_deref()),
+            setting.label.as_str(),
+            value,
+            number.step,
+            number.min,
+            number.max,
+            move |value| {
+                Message::Number {
+                    page: entity,
+                    slot,
+                    value,
+                }
+                .into()
+            },
+        )
+    };
+
+    if !number.optional {
+        return labelled(setting).control(spin(value.unwrap_or(number.min)));
+    }
+
+    // An optional key needs a way to say "no value at all", which a spin button bounded
+    // by min and max cannot express. The toggle is that way, and the spin button only
+    // appears once there is a number to adjust.
+    let control = row::with_capacity(2)
+        .spacing(theme::spacing().space_xs)
+        .align_y(Alignment::Center)
+        .push_maybe(value.map(|value| spin(value)))
+        .push(
+            toggler(value.is_some())
+                .width(Length::Shrink)
+                .on_toggle(move |enabled| {
+                    Message::NumberEnabled {
+                        page: entity,
+                        slot,
+                        enabled,
+                    }
+                    .into()
+                }),
+        );
+
+    labelled(setting).control(control)
+}
+
+fn slider_row<'a>(
+    setting: &'a Setting,
+    config: &'a Slider,
+    page: &'a Page,
+) -> impl IntoListItem<'a, crate::pages::Message> + 'a {
+    let (slot, entity) = (setting.slot, page.entity());
+    let value = current_number(setting, page, false).unwrap_or(config.min);
+
+    // A bare slider stretches across the whole 800-point column and stops reading as a
+    // control; upstream caps its sliders the same way.
+    let control = row::with_capacity(3)
+        .spacing(theme::spacing().space_xs)
+        .align_y(Alignment::Center)
+        .push_maybe(config.min_label.as_deref().map(text::caption))
+        .push(
+            slider(config.min..=config.max, value, move |value| {
+                Message::Slide {
+                    page: entity,
+                    slot,
+                    value,
+                }
+                .into()
+            })
+            .step(config.step)
+            .width(Length::Fixed(250.0)),
+        )
+        .push_maybe(config.max_label.as_deref().map(text::caption));
+
+    labelled(setting).flex_control(control)
+}
+
+fn text_row<'a>(
+    setting: &'a Setting,
+    field: &'a TextField,
+    page: &'a Page,
+) -> impl IntoListItem<'a, crate::pages::Message> + 'a {
+    let (slot, entity) = (setting.slot, page.entity());
+    let draft = page.draft(slot);
+
+    // While editing, the field shows what has been typed; otherwise the stored value.
+    // Keeping the two apart is what lets an abandoned edit leave the config alone.
+    let shown = draft
+        .map(str::to_owned)
+        .or_else(|| current(setting, page).and_then(store::as_text))
+        .unwrap_or_default();
+
+    let control = widget::editable_input(
+        field.placeholder.clone().unwrap_or_default(),
+        shown,
+        draft.is_some(),
+        move |editing| {
+            Message::TextEditing {
+                page: entity,
+                slot,
+                editing,
+            }
+            .into()
+        },
+    )
+    .on_input(move |text| {
+        Message::TextDraft {
+            page: entity,
+            slot,
+            text,
+        }
+        .into()
+    })
+    .on_submit(move |_| Message::TextCommit { page: entity, slot }.into())
+    .on_unfocus(Message::TextCommit { page: entity, slot }.into())
+    .width(Length::Fixed(200.0));
+
+    labelled(setting).control(control)
+}
+
+/// The number shown on the spin button, with the unit the schema declared.
+fn display_number(value: f64, decimals: u8, suffix: Option<&str>) -> String {
+    let value = store::format_number(value, decimals);
+
+    match suffix {
+        Some(suffix) => format!("{value} {suffix}"),
+        None => value,
+    }
+}
+
 /// The value in force: what the config holds, else what the schema declares.
 ///
 /// Falling back to the schema default matters on a machine where the applet has never
 /// run and its package installed no defaults - without it every control would render
 /// "off" while the applet itself uses something else.
-fn current<'a>(setting: &'a Setting, values: &'a [Option<String>]) -> Option<&'a str> {
-    values
+fn current<'a>(setting: &'a Setting, page: &'a Page) -> Option<&'a str> {
+    page.values()
         .get(setting.slot)
         .and_then(Option::as_deref)
         .or(setting.default.as_deref())
+}
+
+fn current_number(setting: &Setting, page: &Page, optional: bool) -> Option<f64> {
+    let text = current(setting, page)?;
+
+    if optional {
+        store::as_optional_number(text).flatten()
+    } else {
+        store::as_number(text)
+    }
 }
 
 /// Which option is in force, if any.
@@ -161,12 +310,8 @@ fn current<'a>(setting: &'a Setting, values: &'a [Option<String>]) -> Option<&'a
 /// A value outside the schema's list selects nothing. That is deliberate: the applet
 /// may accept more than the schema chose to expose, and quietly snapping the display to
 /// the nearest listed option would misreport what is actually configured.
-fn selected(
-    setting: &Setting,
-    items: &[super::schema::model::ChoiceItem],
-    values: &[Option<String>],
-) -> Option<usize> {
-    let value = current(setting, values)?;
+fn selected(setting: &Setting, items: &[ChoiceItem], page: &Page) -> Option<usize> {
+    let value = current(setting, page)?;
     items
         .iter()
         .position(|item| store::same_value(&item.value, value))
@@ -180,6 +325,6 @@ fn selected(
 pub fn message(text: String) -> Element<'static, crate::pages::Message> {
     text::body(text)
         .apply(cosmic::widget::container)
-        .center_x(cosmic::iced::Length::Fill)
+        .center_x(Length::Fill)
         .into()
 }

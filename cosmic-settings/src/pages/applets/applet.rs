@@ -10,7 +10,10 @@
 //! [`super::update`] dispatches on that. See `.doc/settings/02-architecture.md`.
 
 use super::schema::model::{Control, Group, Row, Schema, Setting};
-use super::{Message, control, store::Store};
+use super::{
+    Message, control,
+    store::{self, Store},
+};
 use crate::pages::desktop::panel::applets_inner::Applet;
 use cosmic::Task;
 use cosmic_settings_page::{self as page, Section, section};
@@ -28,6 +31,9 @@ pub struct Page {
     schema: Option<Schema>,
     /// Current raw RON text per setting slot; `None` until the page is first entered.
     values: Vec<Option<String>>,
+    /// The text field being edited and what has been typed into it. Kept out of `values`
+    /// so that an abandoned edit leaves the stored value alone.
+    editing: Option<(usize, String)>,
     store: Option<Store>,
 }
 
@@ -44,7 +50,21 @@ impl Page {
             applet,
             schema,
             values,
+            editing: None,
             store: None,
+        }
+    }
+
+    /// Raw RON text per slot, for the controls to render.
+    pub fn values(&self) -> &[Option<String>] {
+        &self.values
+    }
+
+    /// The text field being edited, if it is this slot.
+    pub fn draft(&self, slot: usize) -> Option<&str> {
+        match &self.editing {
+            Some((editing, text)) if *editing == slot => Some(text.as_str()),
+            _ => None,
         }
     }
 
@@ -67,9 +87,135 @@ impl Page {
                     self.write(slot, value);
                 }
             }
+
+            Message::Number { slot, value, .. } => {
+                if let Some(text) = self.number_text(slot, Some(value)) {
+                    self.write(slot, text);
+                }
+            }
+
+            Message::NumberEnabled { slot, enabled, .. } => {
+                // Switching the toggle back on has to put SOMETHING in the key, and the
+                // schema default is the only value that is known to make sense to the
+                // applet; the range minimum is the fallback when there is no default.
+                let value = enabled.then(|| self.number_default(slot));
+                if let Some(text) = self.number_text(slot, value.flatten()) {
+                    self.write(slot, text);
+                }
+            }
+
+            Message::Slide { slot, value, .. } => {
+                if let Some(text) = self.number_text(slot, Some(value)) {
+                    self.write(slot, text);
+                }
+            }
+
+            Message::TextDraft { slot, text, .. } => {
+                let text = match self.text_limit(slot) {
+                    Some(limit) => text.chars().take(limit).collect(),
+                    None => text,
+                };
+                self.editing = Some((slot, text));
+            }
+
+            Message::TextEditing { slot, editing, .. } => {
+                if editing {
+                    let current = self
+                        .values
+                        .get(slot)
+                        .and_then(Option::as_deref)
+                        .and_then(store::as_text)
+                        .unwrap_or_default();
+                    self.editing = Some((slot, current));
+                } else {
+                    self.commit_text(slot);
+                }
+            }
+
+            Message::TextCommit { slot, .. } => self.commit_text(slot),
+
+            Message::Reset { .. } => self.reset(),
         }
 
         Task::none()
+    }
+
+    fn commit_text(&mut self, slot: usize) {
+        if let Some((editing, text)) = self.editing.take()
+            && editing == slot
+        {
+            self.write(slot, store::format_text(&text));
+        }
+    }
+
+    /// Put every key the schema names back to the value the applet's package installed,
+    /// falling back to the schema's own default. A key with neither is left alone: there
+    /// is no API to unset one, and guessing would be worse than doing nothing.
+    fn reset(&mut self) {
+        let Some(schema) = self.schema.as_ref() else {
+            return;
+        };
+
+        let restore: Vec<(usize, String)> = schema
+            .groups
+            .iter()
+            .flat_map(|group| &group.rows)
+            .filter_map(|row| match row {
+                Row::Setting(setting) => {
+                    let value = self
+                        .store
+                        .as_ref()
+                        .and_then(|store| store.system_default(&setting.key))
+                        .or_else(|| setting.default.clone())?;
+                    Some((setting.slot, value))
+                }
+                Row::Note(_) => None,
+            })
+            .collect();
+
+        for (slot, value) in restore {
+            self.write(slot, value);
+        }
+    }
+
+    /// Render a number for the config the way this setting declares it.
+    fn number_text(&self, slot: usize, value: Option<f64>) -> Option<String> {
+        let (decimals, optional) = match &self.setting(slot)?.control {
+            Control::Number(number) => (number.decimals, number.optional),
+            Control::Slider(slider) => (slider.decimals, false),
+            _ => return None,
+        };
+
+        Some(if optional {
+            store::format_optional_number(value, decimals)
+        } else {
+            store::format_number(value?, decimals)
+        })
+    }
+
+    /// The value an optional number returns to when its toggle is switched back on.
+    fn number_default(&self, slot: usize) -> Option<f64> {
+        let setting = self.setting(slot)?;
+        let Control::Number(number) = &setting.control else {
+            return None;
+        };
+
+        let declared = setting.default.as_deref().and_then(|text| {
+            if number.optional {
+                store::as_optional_number(text).flatten()
+            } else {
+                store::as_number(text)
+            }
+        });
+
+        Some(declared.unwrap_or(number.min))
+    }
+
+    fn text_limit(&self, slot: usize) -> Option<usize> {
+        match &self.setting(slot)?.control {
+            Control::Text(field) => field.max_len,
+            _ => None,
+        }
     }
 
     /// Write one key and, if it landed, remember the new value.
@@ -94,7 +240,7 @@ impl Page {
     fn option_value(&self, slot: usize, item: usize) -> Option<String> {
         match &self.setting(slot)?.control {
             Control::Choice { items, .. } => items.get(item).map(|item| item.value.clone()),
-            Control::Toggle => None,
+            _ => None,
         }
     }
 
@@ -172,11 +318,12 @@ impl page::Page<crate::pages::Message> for Page {
             return Some(vec![sections.insert(message(fl!("applet-settings-none")))]);
         }
 
-        Some(
-            (0..schema.groups.len())
-                .map(|index| sections.insert(group_section(index, &schema.groups[index])))
-                .collect(),
-        )
+        let mut content: Vec<_> = (0..schema.groups.len())
+            .map(|index| sections.insert(group_section(index, &schema.groups[index])))
+            .collect();
+
+        content.push(sections.insert(reset_section()));
+        Some(content)
     }
 
     fn on_enter(&mut self) -> Task<crate::pages::Message> {
@@ -212,9 +359,29 @@ fn group_section(index: usize, group: &Group) -> Section<crate::pages::Message> 
         .descriptions(descriptions)
         .view::<Page>(move |_binder, page, _section| {
             match page.schema.as_ref().and_then(|s| s.groups.get(index)) {
-                Some(group) => control::group(group, &page.values, page.entity),
+                Some(group) => control::group(group, page),
                 None => cosmic::widget::space().into(),
             }
+        })
+}
+
+/// The "reset to defaults" button, one per page rather than one per row.
+///
+/// Placed at the foot of the page in the shape the panel page already uses
+/// (`desktop::panel::inner::reset_button`), and marked `search_ignore` because a button
+/// is not a setting and has no business turning up in search results.
+fn reset_section() -> Section<crate::pages::Message> {
+    Section::default()
+        .search_ignore()
+        .view::<Page>(move |_binder, page, _section| {
+            cosmic::widget::button::standard(fl!("applet-settings-reset"))
+                .on_press(
+                    Message::Reset {
+                        page: page.entity,
+                    }
+                    .into(),
+                )
+                .into()
         })
 }
 
