@@ -26,22 +26,13 @@ mod control;
 pub mod schema;
 mod store;
 
-use crate::pages::desktop::panel::applets_inner::{self, Applet, AppletsPage};
-use crate::pages::desktop::dock;
+use crate::pages::desktop::panel::applets_inner::{self, Applet};
 use cosmic::Task;
 use cosmic::surface;
 use cosmic_settings_page as page;
 use std::collections::HashMap;
 
 pub use applet::Page as AppletPage;
-
-/// Applet list pages that applet settings pages hang off, by `Info::id`.
-///
-/// One page per applet per list: the panel's copy and the dock's copy are separate
-/// registrations so that the "back" link in the header returns where the user came from.
-/// They edit the same config, because an applet has one configuration no matter which
-/// bar it sits in.
-const PARENTS: [&str; 2] = ["panel_applets", "dock_applets"];
 
 #[derive(Clone, Debug)]
 pub enum Message {
@@ -130,56 +121,57 @@ impl From<Message> for crate::app::Message {
     }
 }
 
-/// Give every installed applet a settings page.
+/// Report schemas shipped by nothing that is installed.
 ///
-/// Called once from `SettingsApp::init`, after the applet list pages exist: the applets
-/// themselves are read off those pages rather than scanned again, so the settings page
-/// list and the applet list can never disagree about what is installed.
-pub fn register_all(binder: &mut page::Binder<crate::pages::Message>) {
-    let mut schemas = schema::load_all();
-
-    let parents: Vec<(page::Entity, String)> = binder
-        .info
-        .iter()
-        .filter(|(_, info)| PARENTS.contains(&info.id.as_ref()))
-        .map(|(entity, info)| (entity, info.id.to_string()))
-        .collect();
-
-    for (parent, parent_id) in parents {
-        let Some(applets) = applets_of(binder, parent) else {
-            continue;
-        };
-
-        let mut registered = HashMap::with_capacity(applets.len());
-
-        for applet in applets {
-            let schema = schemas.get(applet.id.as_ref()).cloned();
-            let id = applet.id.to_string();
-            let child = binder.register_page(AppletPage::new(&parent_id, applet, schema));
-
-            // Sets the breadcrumb in the page header and the nav bar item that stays
-            // highlighted. Not added to `binder.sub_pages`: the applet list page has its
-            // own `content()`, and `SettingsApp::view` checks content before sub-pages,
-            // so a sub-page list there would never be drawn.
-            binder.info[child].parent = Some(parent);
-            registered.insert(id, child);
-        }
-
-        set_settings_pages(binder, parent, registered);
-    }
-
-    // Schemas whose applet is not installed. Worth saying out loud: the usual cause is a
-    // schema file whose name does not match the applet's desktop id.
-    schemas.retain(|id, _| {
+/// Called once from `SettingsApp::init`, after every applet list page exists. The pages
+/// themselves are registered by [`register_for`], one panel at a time, because a panel can
+/// appear at any moment.
+pub fn warn_orphan_schemas(binder: &page::Binder<crate::pages::Message>) {
+    // The usual cause is a schema file whose name does not match the applet's desktop id.
+    for id in schema::load_all().keys().filter(|id| {
         !binder
             .info
             .iter()
             .any(|(_, info)| info.id.ends_with(&format!(":{id}")))
-    });
-
-    for id in schemas.keys() {
+    }) {
         tracing::warn!(id, "applet settings schema has no matching applet");
     }
+}
+
+/// Give the applets of one applet list page their settings pages.
+///
+/// One page per applet per list, so that the "back" link in the header returns where the
+/// user came from. They edit the same config, because an applet has one configuration no
+/// matter which panel it sits in.
+pub fn register_for(binder: &mut page::Binder<crate::pages::Message>, parent: page::Entity) {
+    let Some(parent_id) = binder.info.get(parent).map(|info| info.id.to_string()) else {
+        return;
+    };
+
+    let schemas = schema::load_all();
+
+    // The applets are read off the list page rather than scanned again, so the settings
+    // pages and the applet list can never disagree about what is installed.
+    let Some(applets) = applets_of(binder, parent) else {
+        return;
+    };
+
+    let mut registered = HashMap::with_capacity(applets.len());
+
+    for applet in applets {
+        let schema = schemas.get(applet.id.as_ref()).cloned();
+        let id = applet.id.to_string();
+        let child = binder.register_page(AppletPage::new(&parent_id, applet, schema));
+
+        // Sets the breadcrumb in the page header and the nav bar item that stays
+        // highlighted. Not added to `binder.sub_pages`: the applet list page has its
+        // own `content()`, and `SettingsApp::view` checks content before sub-pages,
+        // so a sub-page list there would never be drawn.
+        binder.info[child].parent = Some(parent);
+        registered.insert(id, child);
+    }
+
+    set_settings_pages(binder, parent, registered);
 }
 
 /// Route a message to the page that produced it.
@@ -207,16 +199,11 @@ fn applets_of(
     binder: &page::Binder<crate::pages::Message>,
     parent: page::Entity,
 ) -> Option<Vec<Applet<'static>>> {
-    let page = binder.page.get(parent)?;
-
-    // Two concrete types wear the `AppletsPage` trait, and downcasting needs a concrete
-    // one: the panel owns the page, the dock wraps it.
-    if let Some(page) = page.downcast_ref::<applets_inner::Page>() {
-        return Some(page.available_entries.clone());
-    }
-
-    page.downcast_ref::<dock::applets::Page>()
-        .map(|page| page.inner().available_entries.clone())
+    binder
+        .page
+        .get(parent)?
+        .downcast_ref::<applets_inner::Page>()
+        .map(|page| page.available_entries.clone())
 }
 
 /// Hand the applet list page the map it needs to draw its settings buttons.
@@ -225,13 +212,11 @@ fn set_settings_pages(
     parent: page::Entity,
     pages: HashMap<String, page::Entity>,
 ) {
-    let Some(page) = binder.page.get_mut(parent) else {
-        return;
-    };
-
-    if let Some(page) = page.downcast_mut::<applets_inner::Page>() {
+    if let Some(page) = binder
+        .page
+        .get_mut(parent)
+        .and_then(|page| page.downcast_mut::<applets_inner::Page>())
+    {
         page.settings_pages = pages;
-    } else if let Some(page) = page.downcast_mut::<dock::applets::Page>() {
-        page.inner_mut().settings_pages = pages;
     }
 }

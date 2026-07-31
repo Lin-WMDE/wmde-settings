@@ -14,7 +14,7 @@ use std::sync::Arc;
 use cosmic::app::ContextDrawer;
 //TODO: use embedded cosmic-files for portability
 use cosmic::config::CosmicTk;
-use cosmic::cosmic_config::{Config, ConfigSet, CosmicConfigEntry};
+use cosmic::cosmic_config::{Config, ConfigGet, ConfigSet, CosmicConfigEntry};
 use cosmic::cosmic_theme::palette::{FromColor, Hsv, Srgb};
 use cosmic::cosmic_theme::{CornerRadii, Density, Roundness, ThemeBuilder, ThemeMode};
 #[cfg(feature = "xdg-portal")]
@@ -251,7 +251,7 @@ impl Page {
 
                 #[cfg(feature = "wayland")]
                 tokio::task::spawn(async move {
-                    Self::update_dock_padding(r);
+                    Self::update_panel_padding(r);
                     Self::update_panel_radii(r);
                 });
             }
@@ -611,7 +611,7 @@ impl Page {
         tasks
     }
 
-    // TODO: cache panel and dock configs so that they needn't be re-read
+    // TODO: cache panel configs so that they needn't be re-read
     #[cfg(feature = "wayland")]
     fn load_panel_config(name: &str) -> Option<(Config, CosmicPanelConfig)> {
         let helper = CosmicPanelConfig::cosmic_config(name).ok()?;
@@ -619,16 +619,28 @@ impl Page {
         (config.name == name).then_some((helper, config))
     }
 
+    /// Every configured panel. The theme reaches all of them: how many there are is a
+    /// user's decision, and none of them is the one that follows the theme.
+    #[cfg(feature = "wayland")]
+    fn panel_configs() -> Vec<(Config, CosmicPanelConfig)> {
+        let Ok(helper) = cosmic_panel_config::CosmicPanelContainerConfig::cosmic_config() else {
+            return Vec::new();
+        };
+
+        helper
+            .get::<Vec<String>>("entries")
+            .unwrap_or_default()
+            .into_iter()
+            .filter_map(|name| Self::load_panel_config(&name))
+            .collect()
+    }
+
     #[cfg(feature = "wayland")]
     pub fn update_panel_radii(roundness: Roundness) {
         let corner_radii: CornerRadii = roundness.into();
         let radius = corner_radii.radius_xl[0] as u32;
 
-        for name in ["Panel", "Dock"] {
-            let Some((helper, mut config)) = Self::load_panel_config(name) else {
-                continue;
-            };
-
+        for (helper, mut config) in Self::panel_configs() {
             let new_radius = if config.anchor_gap {
                 radius
             } else if !config.expand_to_edges {
@@ -638,24 +650,32 @@ impl Page {
             };
 
             if let Err(why) = config.set_border_radius(&helper, new_radius) {
-                tracing::error!(?why, "Error updating {name} corner radii");
+                tracing::error!(
+                    ?why,
+                    name = config.name,
+                    "Error updating panel corner radii"
+                );
             }
         }
     }
 
+    /// An island stands away from the edge and wants padding; a bar runs along it and does
+    /// not.
     #[cfg(feature = "wayland")]
-    pub fn update_dock_padding(roundness: Roundness) {
-        let Some((helper, mut config)) = Self::load_panel_config("Dock") else {
-            return;
-        };
-
+    pub fn update_panel_padding(roundness: Roundness) {
         let padding = match roundness {
             Roundness::Round | Roundness::SlightlyRound => 4,
             Roundness::Square => 0,
         };
 
-        if let Err(why) = config.set_padding(&helper, padding) {
-            tracing::error!(?why, "Error updating dock padding");
+        for (helper, mut config) in Self::panel_configs() {
+            if config.effective_look() != cosmic_panel_config::PanelLook::Island {
+                continue;
+            }
+
+            if let Err(why) = config.set_padding(&helper, padding) {
+                tracing::error!(?why, name = config.name, "Error updating panel padding");
+            }
         }
     }
 
@@ -664,12 +684,9 @@ impl Page {
         let spacing: cosmic::cosmic_theme::Spacing = density.into();
         let space_none = spacing.space_none as u32;
 
-        for name in ["Panel", "Dock"] {
-            let Some((helper, mut config)) = Self::load_panel_config(name) else {
-                continue;
-            };
+        for (helper, mut config) in Self::panel_configs() {
             if let Err(err) = config.set_spacing(&helper, space_none) {
-                tracing::error!(?err, "Error updating {name} spacing");
+                tracing::error!(?err, name = config.name, "Error updating panel spacing");
             }
         }
     }

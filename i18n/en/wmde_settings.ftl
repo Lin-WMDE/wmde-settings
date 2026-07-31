@@ -464,30 +464,36 @@ panel-appearance = Appearance
 
 panel-behavior-and-position = Behavior and positions
     .autohide = Automatically hide panel
-    .dock-autohide = Automatically hide dock
     .position = Position on screen
     .display = Show on display
 
 panel-style = Style
     .anchor-gap = Gap between panel and screen edges
-    .dock-anchor-gap = Gap between dock and screen edges
     .extend = Extend panel to screen edges
-    .dock-extend = Extend dock to screen edges
     .appearance = Appearance
     .size = Size
     .background-opacity = Background opacity
 
 panel-applets = Configuration
-    .dock-desc = Configure dock applets
     .desc = Configure panel applets
 
 panel-missing = Panel configuration is missing
     .desc = The panel configuration file is missing due to use of a custom configuration or it is corrupted.
     .fix = Reset to default
 
-## Desktop: Dock
+panels = Panels
+    .restore-defaults = Restore the default panels
 
-dock = Dock
+panel-look = Shape
+    .bar = Bar along the edge
+    .island = Island
+
+panel-active-display = Active display
+
+panel-add = Add panel
+    .confirm = Add
+
+panel-remove = Remove panel
 
 ## Desktop: Window management
 

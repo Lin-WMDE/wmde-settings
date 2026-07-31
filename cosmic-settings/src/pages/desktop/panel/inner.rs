@@ -10,8 +10,8 @@ use cosmic::{Element, Task, surface};
 use cosmic::Apply;
 use cosmic_config::ConfigSet;
 use cosmic_panel_config::{
-    AutoHide, CosmicPanelBackground, CosmicPanelConfig, CosmicPanelContainerConfig,
-    CosmicPanelOuput, PanelAnchor, PanelSize,
+    AutoHide, CosmicPanelBackground, CosmicPanelConfig, CosmicPanelOuput, PanelAnchor, PanelLook,
+    PanelSize,
 };
 use cosmic_settings_page::{self as page, Section};
 use std::collections::HashMap;
@@ -26,11 +26,10 @@ pub struct PageInner {
     pub outputs: Vec<String>,
     pub anchors: Vec<String>,
     pub backgrounds: Vec<String>,
-    pub(crate) container_config: Option<CosmicPanelContainerConfig>,
+    pub looks: Vec<String>,
     // TODO move these into panel config
     pub(crate) outputs_map: HashMap<ObjectId, (String, WlOutput)>,
     pub(crate) system_default: Option<CosmicPanelConfig>,
-    pub(crate) system_container: Option<CosmicPanelContainerConfig>,
 }
 
 impl Default for PageInner {
@@ -53,33 +52,31 @@ impl Default for PageInner {
                 Appearance::Light.to_string(),
                 Appearance::Dark.to_string(),
             ],
-            container_config: Option::default(),
+            looks: vec![
+                Look(PanelLook::Bar).to_string(),
+                Look(PanelLook::Island).to_string(),
+            ],
             outputs_map: HashMap::default(),
             system_default: None,
-            system_container: cosmic::cosmic_config::Config::system(
-                cosmic_panel_config::NAME,
-                CosmicPanelConfig::VERSION,
-            )
-            .map(
-                |c| match CosmicPanelContainerConfig::load_from_config(&c, true) {
-                    Ok(c) => c,
-                    Err((errs, c)) => {
-                        for err in errs.into_iter().filter(cosmic_config::Error::is_err) {
-                            tracing::error!(?err, "Error when loading Panel container config.");
-                        }
-                        c
-                    }
-                },
-            )
-            .ok(),
         }
     }
 }
 
+/// Shared behaviour of a page that edits one panel.
+///
+/// The sections below are written against this trait rather than against a concrete page,
+/// because every panel has a page and they are all the same Rust type.
 pub trait PanelPage {
     fn inner(&self) -> &PageInner;
 
     fn inner_mut(&mut self) -> &mut PageInner;
+
+    /// Which page this is.
+    ///
+    /// Sections must read it here, at draw time, and never capture it: `content()` builds
+    /// the sections before `set_id()` has run, so an entity captured then is null. Getting
+    /// this wrong writes into a neighbouring panel's config without a panic to show for it.
+    fn entity(&self) -> page::Entity;
 
     fn autohide_label(&self) -> String;
 
@@ -89,12 +86,14 @@ pub trait PanelPage {
 
     fn configure_applets_label(&self) -> String;
 
-    fn applets_page_id(&self) -> &'static str;
+    /// `Info::id` of this panel's applet list page. One page per panel, so this is not a
+    /// constant.
+    fn applets_page_id(&self) -> String;
 }
 
 pub(crate) fn behavior_and_position<
     P: page::Page<crate::pages::Message> + PanelPage,
-    T: Fn(Message) -> crate::pages::Message + Copy + Send + Sync + 'static,
+    T: Fn(page::Entity, Message) -> crate::pages::Message + Copy + Send + Sync + 'static,
 >(
     p: &P,
     msg_map: T,
@@ -110,6 +109,8 @@ pub(crate) fn behavior_and_position<
         .descriptions(descriptions)
         .view::<P>(move |_binder, page, section| {
             let descriptions = &section.descriptions;
+            let entity = page.entity();
+            let msg_map = move |m| msg_map(entity, m);
             let page = page.inner();
             let Some(panel_config) = page.panel_config.as_ref() else {
                 return Element::from(text::body(fl!("unknown")));
@@ -153,7 +154,7 @@ pub(crate) fn behavior_and_position<
 
 pub(crate) fn style<
     P: page::Page<crate::pages::Message> + PanelPage,
-    T: Fn(Message) -> crate::pages::Message + Copy + Send + Sync + 'static,
+    T: Fn(page::Entity, Message) -> crate::pages::Message + Copy + Send + Sync + 'static,
 >(
     p: &P,
     msg_map: T,
@@ -161,6 +162,7 @@ pub(crate) fn style<
     crate::slab!(descriptions {
         gap_label = p.gap_label();
         extend_label = p.extend_label();
+        look = fl!("panel-look");
         appearance = fl!("panel-style", "appearance");
         background_opacity = fl!("panel-style", "background-opacity");
         size = fl!("panel-style", "size");
@@ -171,12 +173,28 @@ pub(crate) fn style<
         .descriptions(descriptions)
         .view::<P>(move |_binder, page, section| {
             let descriptions = &section.descriptions;
+            let entity = page.entity();
+            let msg_map = move |m| msg_map(entity, m);
             let inner = page.inner();
             let Some(panel_config) = inner.panel_config.as_ref() else {
                 return Element::from(text::body(fl!("unknown")));
             };
             settings::section()
                 .title(&section.title)
+                .add(settings::item(
+                    &descriptions[look],
+                    dropdown::popup_dropdown(
+                        inner.looks.as_slice(),
+                        match panel_config.effective_look() {
+                            PanelLook::Island => Some(1),
+                            PanelLook::Bar | PanelLook::Auto => Some(0),
+                        },
+                        Message::Look,
+                        cosmic::iced::window::Id::RESERVED,
+                        Message::Surface,
+                        move |a| crate::app::Message::PageMessage(msg_map(a)),
+                    ),
+                ))
                 .add(
                     settings::item::builder(&descriptions[gap_label])
                         .toggler(panel_config.anchor_gap, Message::AnchorGap),
@@ -285,10 +303,9 @@ pub(crate) fn configuration<P: page::Page<crate::pages::Message> + PanelPage>(
         .view::<P>(move |binder, page, section| {
             let mut settings = settings::section().title(&section.title);
             let descriptions = &section.descriptions;
-            settings = if let Some((panel_applets_entity, _panel_applets_info)) = binder
-                .info
-                .iter()
-                .find(|(_, v)| v.id == page.applets_page_id())
+            let applets_page_id = page.applets_page_id();
+            settings = if let Some((panel_applets_entity, _panel_applets_info)) =
+                binder.info.iter().find(|(_, v)| v.id == applets_page_id)
             {
                 settings.add(crate::widget::go_next_item(
                     &descriptions[applets_label],
@@ -302,33 +319,10 @@ pub(crate) fn configuration<P: page::Page<crate::pages::Message> + PanelPage>(
         })
 }
 
-#[allow(clippy::module_name_repetitions)]
-pub(crate) fn add_panel<
-    P: page::Page<crate::pages::Message> + PanelPage,
-    T: Fn(Message) -> crate::pages::Message + Copy + 'static,
->(
-    msg_map: T,
-) -> Section<crate::pages::Message> {
-    crate::slab!(descriptions {
-        reset_to_default = fl!("reset-to-default");
-    });
-
-    Section::default()
-        .title(fl!("panel-missing"))
-        .descriptions(descriptions)
-        .view::<P>(move |_binder, _page, section| {
-            let descriptions = &section.descriptions;
-            button::standard(&descriptions[reset_to_default])
-                .on_press(Message::FullReset)
-                .apply(Element::from)
-                .map(msg_map)
-        })
-}
-
 #[allow(clippy::too_many_lines)]
 pub fn reset_button<
     P: page::Page<crate::pages::Message> + PanelPage,
-    T: Fn(Message) -> crate::pages::Message + Copy + 'static,
+    T: Fn(page::Entity, Message) -> crate::pages::Message + Copy + 'static,
 >(
     msg_map: T,
 ) -> Section<crate::pages::Message> {
@@ -340,6 +334,7 @@ pub fn reset_button<
         .descriptions(descriptions)
         .view::<P>(move |_binder, page, section| {
             let descriptions = &section.descriptions;
+            let entity = page.entity();
             let inner = page.inner();
             if inner.system_default == inner.panel_config {
                 Element::from(space())
@@ -348,12 +343,12 @@ pub fn reset_button<
                     .on_press(Message::ResetPanel)
                     .into()
             }
-            .map(msg_map)
+            .map(move |m| msg_map(entity, m))
         })
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct Anchor(PanelAnchor);
+pub struct Anchor(pub PanelAnchor);
 
 impl std::fmt::Display for Anchor {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -365,6 +360,24 @@ impl std::fmt::Display for Anchor {
                 PanelAnchor::Bottom => fl!("panel-bottom"),
                 PanelAnchor::Left => fl!("panel-left"),
                 PanelAnchor::Right => fl!("panel-right"),
+            }
+        )
+    }
+}
+
+/// A [`PanelLook`] under its user-facing name. [`PanelLook::Auto`] has none: it is a rule for
+/// reading old configs, not something to offer.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct Look(pub PanelLook);
+
+impl std::fmt::Display for Look {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self.0 {
+                PanelLook::Island => fl!("panel-look", "island"),
+                PanelLook::Bar | PanelLook::Auto => fl!("panel-look", "bar"),
             }
         )
     }
@@ -423,6 +436,7 @@ pub enum Message {
     PanelSize(PanelSize),
     PanelSizeCommit,
     Appearance(usize),
+    Look(usize),
     ExtendToEdge(bool),
     OpacityRequest(f32),
     OpacityApply,
@@ -430,7 +444,6 @@ pub enum Message {
     OutputRemoved(WlOutput),
     PanelConfig(Box<CosmicPanelConfig>),
     ResetPanel,
-    FullReset,
     Surface(surface::Action),
 }
 
@@ -463,7 +476,11 @@ impl PageInner {
             Density::Spacious => 4,
         };
 
-        if self.panel_config.as_ref().is_some_and(|c| c.name == "Dock") {
+        if self
+            .panel_config
+            .as_ref()
+            .is_some_and(|c| c.effective_look() == PanelLook::Island)
+        {
             default.padding = match roundness {
                 Roundness::Round => 4,
                 Roundness::SlightlyRound => 4,
@@ -508,28 +525,6 @@ impl PageInner {
                 } else {
                     tracing::error!("Panel config default is missing.");
                 }
-            }
-            Message::FullReset => {
-                if let Some(container) = self.system_container.as_ref()
-                    && let Err(err) = container.write_entries()
-                {
-                    tracing::error!(?err, "Error fully resetting the panel config.");
-                }
-                // update the padding and spacing based on appearance
-                let theme = cosmic::theme::system_preference();
-                let theme = theme.cosmic();
-
-                let radius = theme.corner_radii;
-                let roundness: Roundness = radius.into();
-                crate::pages::desktop::appearance::Page::update_panel_radii(roundness);
-
-                let spacing = theme.spacing;
-                let density = Density::from(spacing);
-                crate::pages::desktop::appearance::Page::update_panel_spacing(density);
-
-                let radius = theme.corner_radii;
-                let roundness: Roundness = radius.into();
-                crate::pages::desktop::appearance::Page::update_dock_padding(roundness);
             }
             _ => {}
         };
@@ -606,6 +601,34 @@ impl PageInner {
                     _ = panel_config.set_background(helper, (*b).into());
                 }
             }
+            Message::Look(i) => {
+                let look = if i == 1 {
+                    PanelLook::Island
+                } else {
+                    PanelLook::Bar
+                };
+                _ = panel_config.set_look(helper, look);
+
+                // The look is what applets read, but on its own it would leave the panel
+                // the same shape it was. Carry the shape with it, to the values the two
+                // looks are defined by.
+                let island = look == PanelLook::Island;
+                let theme = cosmic::theme::system_preference();
+                let radius = theme.cosmic().corner_radii.radius_xl[0] as u32;
+
+                _ = panel_config.set_expand_to_edges(helper, !island);
+                _ = panel_config.set_padding(helper, u32::from(island) * 4);
+                _ = panel_config.set_border_radius(
+                    helper,
+                    if panel_config.anchor_gap {
+                        radius
+                    } else if island {
+                        radius.min(12)
+                    } else {
+                        0
+                    },
+                );
+            }
             Message::ExtendToEdge(enabled) => {
                 _ = panel_config.set_expand_to_edges(helper, enabled);
 
@@ -657,7 +680,7 @@ impl PageInner {
                 self.panel_config = Some(*c);
                 return Task::none();
             }
-            Message::ResetPanel | Message::FullReset => {}
+            Message::ResetPanel => {}
             Message::Surface(_) => {
                 unimplemented!()
             }

@@ -61,10 +61,6 @@ pub enum Message {
     DesktopWorkspaces(desktop::workspaces::Message),
     #[cfg(feature = "page-display")]
     Displays(display::Message),
-    #[cfg(feature = "wayland")]
-    Dock(desktop::dock::Message),
-    #[cfg(feature = "wayland")]
-    DockApplet(desktop::dock::applets::Message),
     External {
         id: String,
         message: Vec<u8>,
@@ -86,10 +82,17 @@ pub enum Message {
     #[cfg(feature = "page-networking")]
     Networking(networking::Message),
     Page(Entity),
+    /// WMDE: the panels, and the runtime pages of individual panels. Carries the entity of
+    /// the page it came from, because those pages are not in `typed_page_ids` and there may
+    /// be any number of them.
     #[cfg(feature = "wayland")]
-    Panel(desktop::panel::Message),
+    Panels(desktop::panel::Message),
+    /// WMDE: one panel's applet list, likewise entity-tagged.
     #[cfg(feature = "wayland")]
-    PanelApplet(desktop::panel::applets_inner::Message),
+    PanelApplet {
+        page: Entity,
+        message: desktop::panel::applets_inner::Message,
+    },
     #[cfg(feature = "page-power")]
     Power(power::Message),
     #[cfg(feature = "page-region")]

@@ -235,6 +235,33 @@ impl<Message: Clone + 'static> Binder<Message> {
     pub fn sub_pages(&self, page: crate::Entity) -> Option<&[crate::Entity]> {
         self.sub_pages.get(page).map(AsRef::as_ref)
     }
+
+    /// WMDE: forgets a page registered at runtime, along with its sections.
+    ///
+    /// The counterpart to [`Self::register_page`]. Only pages the user can create and
+    /// destroy need this - a panel, for instance. A page registered with
+    /// [`Self::register`] must not be passed here: its type stays in `typed_page_ids` and
+    /// `page_id::<P>()` would hand out an entity that no longer resolves.
+    ///
+    /// The entity itself is not reused, so a message still carrying it after removal
+    /// resolves to nothing rather than to another page.
+    pub fn remove_page(&mut self, page: crate::Entity) {
+        if let Some(sections) = self.content.remove(page) {
+            for section in sections {
+                self.sections.remove(section);
+            }
+        }
+
+        if let Some(parent) = self.info.get(page).and_then(|info| info.parent)
+            && let Some(siblings) = self.sub_pages.get_mut(parent)
+        {
+            siblings.retain(|&sibling| sibling != page);
+        }
+
+        self.sub_pages.remove(page);
+        self.page.remove(page);
+        self.info.remove(page);
+    }
 }
 
 pub trait AutoBind<Message: Clone + 'static>: Page<Message> + Default + 'static {

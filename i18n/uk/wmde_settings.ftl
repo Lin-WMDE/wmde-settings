@@ -142,27 +142,28 @@ panel-appearance = Вигляд
     .dark = Темний
 panel-behavior-and-position = Поведінка та положення
     .autohide = Автоматично приховувати панель
-    .dock-autohide = Автоматично приховувати область завдань
     .position = Положення на екрані
     .display = Показувати на дисплеї
 panel-style = Стиль
     .anchor-gap = Відступ між панеллю та краями екрана
-    .dock-anchor-gap = Відступ між областю завдань та краями екрана
     .extend = Розширити панель до країв екрана
-    .dock-extend = Розширити область завдань до країв екрана
     .appearance = Вигляд
     .size = Розмір
     .background-opacity = Непрозорість тла
 panel-applets = Налаштування
-    .dock-desc = Конфігурація віджетів
     .desc = Конфігурація віджетів
 panel-missing = Конфігурацію панелі не знайдено
     .desc = Файл конфігурації відсутній через використання власних налаштувань або його пошкодження.
     .fix = Типові значення
-
-## Desktop: Dock
-
-dock = Область завдань
+panels = Панелі
+    .restore-defaults = Відновити типові панелі
+panel-look = Форма
+    .bar = Смуга вздовж краю
+    .island = Острівець
+panel-active-display = Активний дисплей
+panel-add = Додати панель
+    .confirm = Додати
+panel-remove = Вилучити панель
 
 ## Desktop: Window management
 

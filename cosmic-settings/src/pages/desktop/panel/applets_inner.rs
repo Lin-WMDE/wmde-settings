@@ -10,7 +10,7 @@ use cosmic::iced;
 use cosmic::iced::core::clipboard::IconSurface;
 use cosmic::widget::{Column, button, column, container, icon, list_column, row, text, text_input};
 
-use cosmic::cosmic_config::{Config, CosmicConfigEntry};
+use cosmic::cosmic_config::{Config, ConfigGet, CosmicConfigEntry};
 use cosmic::iced::core::widget::{Operation, Tree, tree};
 use cosmic::iced::core::{Clipboard, Shell, Widget, layout, renderer, window};
 use cosmic::iced::runtime::Task;
@@ -21,14 +21,14 @@ use cosmic::iced::{
 use cosmic::{Apply, Element, theme};
 
 use std::borrow::Cow;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 use std::mem;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 
 use crate::{app, pages};
-use cosmic_panel_config::CosmicPanelConfig;
+use cosmic_panel_config::{CosmicPanelConfig, CosmicPanelContainerConfig};
 use cosmic_settings_page::{self as page, Section, section};
 use freedesktop_desktop_entry::DesktopEntry;
 use slotmap::{Key, SlotMap};
@@ -50,28 +50,35 @@ pub static APPLET_DND_ICON_ID: LazyLock<window::Id> = LazyLock::new(window::Id::
 
 pub struct Page {
     pub(crate) entity: page::Entity,
+    /// Which panel's applets these are. Also the config key, `fun.wmde.Panel.<name>`.
+    pub(crate) panel: String,
     pub(crate) available_entries: Vec<Applet<'static>>,
     pub(crate) config_helper: Option<Config>,
     pub(crate) current_config: Option<CosmicPanelConfig>,
     pub(crate) reorder_widget_state: Option<(Applet<'static>, CosmicPanelConfig)>,
     pub(crate) search: String,
     pub(crate) context: Option<ContextDrawerVariant>,
+    /// Applet ids sitting on some other panel, refreshed when the add drawer opens. Only
+    /// applets that say they are single-instance are kept out of the list because of it.
+    pub(crate) elsewhere: HashSet<String>,
     /// WMDE: applet id -> its settings page, filled in by `pages::applets::register_all`
     /// once every page exists. Empty until then, and empty in a build where no applet
     /// list page was registered.
     pub(crate) settings_pages: HashMap<String, page::Entity>,
 }
 
-impl Default for Page {
-    fn default() -> Self {
-        let config_helper = CosmicPanelConfig::cosmic_config("Panel").ok();
+impl Page {
+    /// The applet list of one panel.
+    pub fn new(panel: &str) -> Self {
+        let config_helper = CosmicPanelConfig::cosmic_config(panel).ok();
         let current_config = config_helper.as_ref().and_then(|config_helper| {
             let panel_config = CosmicPanelConfig::get_entry(config_helper).ok()?;
             // If the config is not present, it will be created with the default values and the name will not match
-            (panel_config.name == "Panel").then_some(panel_config)
+            (panel_config.name == panel).then_some(panel_config)
         });
         Self {
             entity: page::Entity::null(),
+            panel: panel.to_owned(),
             available_entries: freedesktop_desktop_entry::Iter::new(
                 freedesktop_desktop_entry::default_paths(),
             )
@@ -82,6 +89,7 @@ impl Default for Page {
             reorder_widget_state: None,
             search: String::new(),
             context: None,
+            elsewhere: HashSet::new(),
             settings_pages: HashMap::new(),
         }
     }
@@ -113,13 +121,11 @@ impl page::Page<crate::pages::Message> for Page {
         &self,
         sections: &mut SlotMap<section::Entity, Section<crate::pages::Message>>,
     ) -> Option<page::Content> {
-        Some(vec![
-            sections.insert(lists::<Page, _>(pages::Message::PanelApplet)),
-        ])
+        Some(vec![sections.insert(lists::<Page, _>(message))])
     }
 
     fn info(&self) -> page::Info {
-        page::Info::new("panel_applets", "preferences-dock-symbolic").title(fl!("applets"))
+        page::Info::new(page_id(&self.panel), "preferences-dock-symbolic").title(fl!("applets"))
     }
 
     fn header_view(&self) -> Option<Element<'_, crate::pages::Message>> {
@@ -129,7 +135,7 @@ impl page::Page<crate::pages::Message> for Page {
             .width(Length::Fill)
             .align_x(Alignment::End)
             .apply(Element::from)
-            .map(crate::pages::Message::PanelApplet);
+            .map(message_of(self.entity));
 
         Some(content)
     }
@@ -142,10 +148,10 @@ impl page::Page<crate::pages::Message> for Page {
                     .on_paste(Message::Search)
                     .width(Length::Fixed(312.0))
                     .apply(Element::from)
-                    .map(crate::pages::Message::PanelApplet);
+                    .map(message_of(self.entity));
 
                 cosmic::app::context_drawer(
-                    self.add_applet_view(crate::pages::Message::PanelApplet),
+                    self.add_applet_view(message_of(self.entity)),
                     crate::pages::Message::CloseContextDrawer,
                 )
                 .title(fl!("add-applet"))
@@ -160,7 +166,56 @@ impl page::Page<crate::pages::Message> for Page {
     }
 }
 
-impl page::AutoBind<crate::pages::Message> for Page {}
+/// Applets placed on every panel but this one.
+fn applets_on_other_panels(panel: &str) -> HashSet<String> {
+    let Ok(helper) = CosmicPanelContainerConfig::cosmic_config() else {
+        return HashSet::new();
+    };
+
+    let mut placed = HashSet::new();
+
+    for name in helper
+        .get::<Vec<String>>("entries")
+        .unwrap_or_default()
+        .into_iter()
+        .filter(|name| name != panel)
+    {
+        let Some(config) = CosmicPanelConfig::cosmic_config(&name)
+            .ok()
+            .and_then(|helper| CosmicPanelConfig::get_entry(&helper).ok())
+        else {
+            continue;
+        };
+
+        placed.extend(config.plugins_center.into_iter().flatten());
+
+        if let Some((start, end)) = config.plugins_wings {
+            placed.extend(start);
+            placed.extend(end);
+        }
+    }
+
+    placed
+}
+
+/// `Info::id` of the applet list page of a panel. Stable across runs, so that reopening
+/// Settings returns to the page it was left on.
+pub fn page_id(panel: &str) -> String {
+    format!("panel:{panel}:applets")
+}
+
+/// Tag a message with the page it came from. There is one of these pages per panel, so the
+/// page cannot be told from the message alone.
+pub fn message(page: page::Entity, message: Message) -> crate::pages::Message {
+    crate::pages::Message::PanelApplet { page, message }
+}
+
+/// [`message`] with the page already bound, for `.map()`.
+pub fn message_of(
+    page: page::Entity,
+) -> impl Fn(Message) -> crate::pages::Message + Copy + 'static {
+    move |m| message(page, m)
+}
 
 #[derive(Clone)]
 pub enum Message {
@@ -246,6 +301,11 @@ impl Page {
             .iter()
             .filter(|a| a.matches(&self.search))
         {
+            // An applet that says it wants to exist once, and already does, elsewhere.
+            if info.single_instance && self.elsewhere.contains(info.id.as_ref()) {
+                continue;
+            }
+
             if let Some(config) = self.current_config.as_ref() {
                 if let Some(center) = config.plugins_center.as_ref()
                     && center.iter().any(|a| a.as_str() == info.id.as_ref())
@@ -432,6 +492,7 @@ impl Page {
                 self.save();
             }
             Message::AddAppletDrawer => {
+                self.elsewhere = applets_on_other_panels(&self.panel);
                 self.context = Some(ContextDrawerVariant::AddApplet);
                 return cosmic::task::message(app::Message::OpenContextDrawer(self.entity));
             }
@@ -443,7 +504,7 @@ impl Page {
 #[allow(clippy::too_many_lines)]
 pub fn lists<
     P: page::Page<crate::pages::Message> + AppletsPage,
-    T: Fn(Message) -> crate::pages::Message + Copy + 'static,
+    T: Fn(page::Entity, Message) -> crate::pages::Message + Copy + 'static,
 >(
     msg_map: T,
 ) -> Section<crate::pages::Message> {
@@ -454,6 +515,9 @@ pub fn lists<
             ..
         } = theme::spacing();
         let page = page.inner();
+        // Read at draw time: `content()` builds this section before `set_id()` has run.
+        let entity = page.entity;
+        let msg_map = move |m| msg_map(entity, m);
         let Some(config) = page.current_config.as_ref() else {
             return Element::from(text::body(fl!("unknown")));
         };
@@ -565,6 +629,9 @@ pub struct Applet<'a> {
     pub description: Cow<'a, str>,
     pub icon: Cow<'a, str>,
     pub path: Cow<'a, Path>,
+    /// `X-WmdeSingleInstance` in the applet's desktop entry: this applet is only worth
+    /// having once, so it is not offered on a second panel while it sits on a first.
+    pub single_instance: bool,
 }
 
 impl Applet<'_> {
@@ -599,6 +666,7 @@ impl<'a> TryFrom<Cow<'a, Path>> for Applet<'static> {
             description: Cow::from(entry.comment(&languages).unwrap_or_default().to_string()),
             icon: Cow::from(entry.icon().unwrap_or_default().to_string()),
             path: Cow::from(path.into_owned()),
+            single_instance: entry.desktop_entry("X-WmdeSingleInstance").is_some(),
         })
     }
 }
@@ -611,6 +679,7 @@ impl Applet<'static> {
             description: Cow::from(self.description.as_ref()),
             icon: Cow::from(self.icon.as_ref()),
             path: Cow::from(self.path.as_ref()),
+            single_instance: self.single_instance,
         }
     }
 }
@@ -623,6 +692,7 @@ impl Applet<'_> {
             description: Cow::from(self.description.into_owned()),
             icon: Cow::from(self.icon.into_owned()),
             path: Cow::from(self.path.into_owned()),
+            single_instance: self.single_instance,
         }
     }
 }

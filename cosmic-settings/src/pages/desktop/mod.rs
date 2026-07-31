@@ -3,8 +3,6 @@
 
 pub mod appearance;
 #[cfg(feature = "wayland")]
-pub mod dock;
-#[cfg(feature = "wayland")]
 pub mod panel;
 pub mod wallpaper;
 #[cfg(feature = "page-window-management")]
@@ -40,10 +38,9 @@ impl page::AutoBind<crate::pages::Message> for Page {
 
         #[cfg(feature = "wayland")]
         {
+            // One page for all panels; the page of a single panel is registered at runtime
+            // by `panel::register_all`, because how many there are is a user's decision.
             page = page.sub_page::<panel::Page>();
-            // WMDE: no Dock - Windows-10 layout is a single bottom taskbar. The dock
-            // module stays compiled (app.rs handlers reference it) but is not registered
-            // in the Desktop settings nav, so it can't be added or reset from the UI.
         }
 
         #[cfg(feature = "page-window-management")]

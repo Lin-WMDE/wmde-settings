@@ -39,10 +39,7 @@ use cosmic_comp_config::CosmicCompConfig;
 use cosmic_panel_config::CosmicPanelConfig;
 use cosmic_settings_page::{self as page, section};
 #[cfg(feature = "wayland")]
-use desktop::{
-    dock,
-    panel::{self, applets_inner, inner as _panel},
-};
+use desktop::panel::{self, applets_inner};
 #[cfg(feature = "wayland")]
 use event::wayland;
 use page::Entity;
@@ -92,10 +89,6 @@ impl SettingsApp {
             PageCommands::Desktop => self.pages.page_id::<desktop::Page>(),
             #[cfg(feature = "page-display")]
             PageCommands::Displays => self.pages.page_id::<display::Page>(),
-            #[cfg(feature = "wayland")]
-            PageCommands::Dock => self.pages.page_id::<desktop::dock::Page>(),
-            #[cfg(feature = "wayland")]
-            PageCommands::DockApplet => self.pages.page_id::<desktop::dock::applets::Page>(),
             #[cfg(feature = "page-input")]
             PageCommands::Input => self.pages.page_id::<input::Page>(),
             #[cfg(feature = "page-input")]
@@ -108,12 +101,10 @@ impl SettingsApp {
             PageCommands::Mouse => self.pages.page_id::<input::mouse::Page>(),
             #[cfg(feature = "page-networking")]
             PageCommands::Network => self.pages.page_id::<networking::Page>(),
+            // The list of panels. A single panel's page is registered at runtime and has no
+            // type to name here.
             #[cfg(feature = "wayland")]
             PageCommands::Panel => self.pages.page_id::<desktop::panel::Page>(),
-            #[cfg(feature = "wayland")]
-            PageCommands::PanelApplet => {
-                self.pages.page_id::<desktop::panel::applets_inner::Page>()
-            }
             #[cfg(feature = "page-power")]
             PageCommands::Power => self.pages.page_id::<power::Page>(),
             #[cfg(feature = "page-region")]
@@ -164,6 +155,9 @@ pub enum Message {
     PageMessage(crate::pages::Message),
     #[cfg(feature = "wayland")]
     PanelConfig(Box<CosmicPanelConfig>),
+    /// WMDE: the set of panels changed, so the pages that stand for them must follow.
+    #[cfg(feature = "wayland")]
+    PanelEntries(Vec<String>),
     #[cfg(feature = "cosmic-comp-config")]
     CompConfig(Box<CosmicCompConfig>),
     SearchActivate,
@@ -235,11 +229,15 @@ impl cosmic::Application for SettingsApp {
         app.insert_page::<time::Page>();
         app.insert_page::<system::Page>();
 
-        // WMDE: one settings page per installed applet, built from the schema each
-        // applet ships. Must run after the pages above, because it hangs its pages off
-        // the applet lists the panel and dock pages registered.
+        // WMDE: a page per configured panel, and per panel a page for its applets. How
+        // many there are is a user's decision, so these cannot be registered by type.
         #[cfg(feature = "wayland")]
-        pages::applets::register_all(&mut app.pages);
+        panel::register_all(&mut app.pages);
+
+        // WMDE: the settings pages of the applets themselves are registered per panel, by
+        // `panel::register_all` above. This only reports a schema that matches nothing.
+        #[cfg(feature = "wayland")]
+        pages::applets::warn_orphan_schemas(&app.pages);
 
         // WMDE: always open on About. The remembered page survives only as a fallback for
         // a build without `page-about`, which also keeps `last_active_page` a field that
@@ -404,29 +402,45 @@ impl cosmic::Application for SettingsApp {
             #[cfg(feature = "wayland")]
             // Watch for changes to installed desktop entries
             desktop_files(0).map(|_| Message::DesktopInfo),
-            // Watch for configuration changes to the panel.
-            // TODO: This should only be active when the panel page is active.
+            // Watch which panels exist, and then each of them. Not a fixed pair of names
+            // any more: the user decides how many there are, so the set of things to watch
+            // is itself a setting.
             #[cfg(feature = "wayland")]
             self.core()
-                .watch_config::<CosmicPanelConfig>("fun.wmde.Panel.Panel")
+                .watch_config::<cosmic_panel_config::CosmicPanelContainerConfigEntry>(
+                    cosmic_panel_config::NAME,
+                )
                 .map(|update| {
                     for why in update.errors {
-                        tracing::error!(?why, "panel config load error");
+                        tracing::error!(?why, "panel entries load error");
                     }
 
-                    Message::PanelConfig(Box::new(update.config))
+                    Message::PanelEntries(update.config.entries)
                 }),
-            // TODO: This should only be active when the dock page is active.
+            // Not `watch_config`: that wants a `&'static str`, and a panel's config id is
+            // built from a name the user chose.
             #[cfg(feature = "wayland")]
-            self.core()
-                .watch_config::<CosmicPanelConfig>("fun.wmde.Panel.Dock")
-                .map(|update| {
-                    for why in update.errors {
-                        tracing::error!(?why, "dock config load error");
-                    }
+            Subscription::batch(
+                self.pages
+                    .page::<panel::Page>()
+                    .map(panel::Page::names)
+                    .unwrap_or_default()
+                    .into_iter()
+                    .map(|name| {
+                        cosmic::cosmic_config::config_subscription::<_, CosmicPanelConfig>(
+                            name.clone(),
+                            Cow::Owned(format!("{}.{name}", cosmic_panel_config::NAME)),
+                            cosmic_panel_config::VERSION,
+                        )
+                        .map(|update| {
+                            for why in update.errors {
+                                tracing::error!(?why, "panel config load error");
+                            }
 
-                    Message::PanelConfig(Box::new(update.config))
-                }),
+                            Message::PanelConfig(Box::new(update.config))
+                        })
+                    }),
+            ),
             page.subscription(self.core()).map(Message::PageMessage),
             #[cfg(feature = "cosmic-comp-config")]
             self.core()
@@ -564,20 +578,6 @@ impl cosmic::Application for SettingsApp {
                 #[cfg(feature = "page-display")]
                 crate::pages::Message::Displays(message) => {
                     if let Some(page) = self.pages.page_mut::<display::Page>() {
-                        return page.update(message).map(Into::into);
-                    }
-                }
-
-                #[cfg(feature = "wayland")]
-                crate::pages::Message::Dock(message) => {
-                    if let Some(page) = self.pages.page_mut::<dock::Page>() {
-                        return page.update(message).map(Into::into);
-                    }
-                }
-
-                #[cfg(feature = "wayland")]
-                crate::pages::Message::DockApplet(message) => {
-                    if let Some(page) = self.pages.page_mut::<dock::applets::Page>() {
                         return page.update(message).map(Into::into);
                     }
                 }
@@ -723,15 +723,20 @@ impl cosmic::Application for SettingsApp {
                 }
 
                 #[cfg(feature = "wayland")]
-                crate::pages::Message::Panel(message) => {
-                    if let Some(page) = self.pages.page_mut::<panel::Page>() {
-                        return page.update(message).map(Into::into);
-                    }
+                crate::pages::Message::Panels(message) => {
+                    return panel::update(&mut self.pages, message).map(Into::into);
                 }
 
+                // Routed by the entity the message carries, not by type: there is one of
+                // these pages per panel.
                 #[cfg(feature = "wayland")]
-                crate::pages::Message::PanelApplet(message) => {
-                    if let Some(page) = self.pages.page_mut::<applets_inner::Page>() {
+                crate::pages::Message::PanelApplet { page, message } => {
+                    if let Some(page) = self
+                        .pages
+                        .page
+                        .get_mut(page)
+                        .and_then(|page| page.downcast_mut::<applets_inner::Page>())
+                    {
                         return page.update(message).map(Into::into);
                     }
                 }
@@ -781,94 +786,23 @@ impl cosmic::Application for SettingsApp {
 
             #[cfg(feature = "wayland")]
             Message::OutputAdded(info, output) => {
-                let mut commands = vec![];
-                if let Some(page) = self.pages.page_mut::<panel::Page>() {
-                    commands.push(
-                        page.update(panel::Message(_panel::Message::OutputAdded(
-                            info.name.clone().unwrap_or_default(),
-                            output.clone(),
-                        )))
-                        .map(Into::into),
-                    );
-                }
-
-                if let Some(page) = self.pages.page_mut::<dock::Page>() {
-                    commands.push(
-                        page.update(dock::Message::Inner(_panel::Message::OutputAdded(
-                            info.name.unwrap_or_default(),
-                            output,
-                        )))
-                        .map(Into::into),
-                    );
-                }
-                return Task::batch(commands);
+                return panel::update(
+                    &mut self.pages,
+                    panel::Message::OutputAdded(info.name.unwrap_or_default(), output),
+                )
+                .map(Into::into);
             }
 
             #[cfg(feature = "wayland")]
             Message::OutputRemoved(output) => {
-                let mut commands = vec![];
-                if let Some(page) = self.pages.page_mut::<panel::Page>() {
-                    commands.push(
-                        page.update(panel::Message(_panel::Message::OutputRemoved(
-                            output.clone(),
-                        )))
-                        .map(Into::into),
-                    );
-                }
-
-                if let Some(page) = self.pages.page_mut::<dock::Page>() {
-                    commands.push(
-                        page.update(dock::Message::Inner(_panel::Message::OutputRemoved(output)))
-                            .map(Into::into),
-                    );
-                }
-                return Task::batch(commands);
+                return panel::update(&mut self.pages, panel::Message::OutputRemoved(output))
+                    .map(Into::into);
             }
 
             #[cfg(feature = "wayland")]
-            Message::PanelConfig(config) if config.name.to_lowercase().contains("panel") => {
-                let mut tasks = Vec::new();
-
-                if let Some(page) = self.pages.page_mut::<panel::Page>() {
-                    tasks.push(
-                        page.update(panel::Message(_panel::Message::PanelConfig(config.clone())))
-                            .map(Into::into),
-                    );
-                }
-
-                if let Some(page) = self.pages.page_mut::<applets_inner::Page>() {
-                    tasks.push(
-                        page.update(applets_inner::Message::PanelConfig(config))
-                            .map(Into::into),
-                    );
-                }
-
-                return Task::batch(tasks);
-            }
-
-            #[cfg(feature = "wayland")]
-            Message::PanelConfig(config) if config.name.to_lowercase().contains("dock") => {
-                let mut tasks = Vec::new();
-
-                if let Some(page) = self.pages.page_mut::<dock::Page>() {
-                    tasks.push(
-                        page.update(dock::Message::Inner(_panel::Message::PanelConfig(
-                            config.clone(),
-                        )))
-                        .map(Into::into),
-                    );
-                }
-
-                if let Some(page) = self.pages.page_mut::<dock::applets::Page>() {
-                    tasks.push(
-                        page.update(dock::applets::Message(applets_inner::Message::PanelConfig(
-                            config,
-                        )))
-                        .map(Into::into),
-                    );
-                }
-
-                return Task::batch(tasks);
+            Message::PanelEntries(entries) => {
+                return panel::update(&mut self.pages, panel::Message::Entries(entries))
+                    .map(Into::into);
             }
 
             #[cfg(feature = "cosmic-comp-config")]
@@ -907,7 +841,29 @@ impl cosmic::Application for SettingsApp {
             }
 
             #[cfg(feature = "wayland")]
-            Message::PanelConfig(_) => {}
+            Message::PanelConfig(config) => {
+                let mut tasks = vec![
+                    panel::update(&mut self.pages, panel::Message::Config(config.clone()))
+                        .map(Into::into),
+                ];
+
+                // The applet list of that same panel reads the plugin lists out of the very
+                // same config, and is a page of its own.
+                if let Some(page) = self
+                    .pages
+                    .find_page_by_id(&applets_inner::page_id(&config.name))
+                    .map(|(entity, _)| entity)
+                    .and_then(|entity| self.pages.page.get_mut(entity))
+                    .and_then(|page| page.downcast_mut::<applets_inner::Page>())
+                {
+                    tasks.push(
+                        page.update(applets_inner::Message::PanelConfig(config))
+                            .map(Into::into),
+                    );
+                }
+
+                return Task::batch(tasks);
+            }
             #[cfg(feature = "wayland")]
             Message::DesktopInfo => {
                 let info_list: Vec<_> = freedesktop_desktop_entry::Iter::new(
@@ -916,16 +872,33 @@ impl cosmic::Application for SettingsApp {
                 .filter_map(|p| applets_inner::Applet::try_from(Cow::from(p)).ok())
                 .collect();
 
-                page::update!(
-                    self.pages,
-                    dock::applets::Message(applets_inner::Message::Applets(info_list.clone())),
-                    dock::applets::Page
-                );
-                if let Some(page) = self.pages.page_mut::<applets_inner::Page>() {
-                    return page
-                        .update(applets_inner::Message::Applets(info_list))
-                        .map(Into::into);
-                }
+                // Every panel has an applet list, and a newly installed applet belongs on
+                // all of them.
+                let entities: Vec<_> = self
+                    .pages
+                    .info
+                    .iter()
+                    .filter(|(_, info)| {
+                        info.id.starts_with("panel:") && info.id.ends_with(":applets")
+                    })
+                    .map(|(entity, _)| entity)
+                    .collect();
+
+                let tasks: Vec<_> = entities
+                    .into_iter()
+                    .filter_map(|entity| {
+                        self.pages
+                            .page
+                            .get_mut(entity)
+                            .and_then(|page| page.downcast_mut::<applets_inner::Page>())
+                            .map(|page| {
+                                page.update(applets_inner::Message::Applets(info_list.clone()))
+                                    .map(Into::into)
+                            })
+                    })
+                    .collect();
+
+                return Task::batch(tasks);
             }
 
             Message::SetTheme(t) => {
