@@ -6,6 +6,9 @@ mod common;
 pub use common::{Model, ShortcutBinding, ShortcutMessage, ShortcutModel};
 
 pub mod accessibility;
+// WMDE: the key bindings applications handle themselves, edited here rather than in
+// each application.
+pub mod app_shortcuts;
 // WMDE: what a custom shortcut can be bound to, so that a command is picked rather
 // than typed from memory.
 pub mod catalog;
