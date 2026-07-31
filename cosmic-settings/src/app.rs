@@ -1240,8 +1240,14 @@ impl SettingsApp {
 
         let mut current_page = page::Entity::default();
         for (page, section) in self.search_selections.iter().copied() {
-            let section = &self.pages.sections[section];
-            let model = &self.pages.page[page];
+            // WMDE: a hit can outlive what it points at. The results survive between
+            // frames, and deleting a panel from a section drawn right here takes its page
+            // and its sections out of the registry; indexing them would panic.
+            let (Some(section), Some(model)) =
+                (self.pages.sections.get(section), self.pages.page.get(page))
+            else {
+                continue;
+            };
 
             if page != current_page {
                 current_page = page;
