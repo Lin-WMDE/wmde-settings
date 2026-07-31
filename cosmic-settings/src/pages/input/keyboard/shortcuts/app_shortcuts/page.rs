@@ -216,9 +216,12 @@ impl page::Page<crate::pages::Message> for Page {
 
         // Only while a row is waiting: this listens to every key press, and the rest
         // of the time the page has no business seeing them.
-        // `listen_with` takes a plain function, so the page this belongs to is
-        // attached afterwards rather than captured.
-        let entity = self.entity;
+        //
+        // Neither `listen_with` nor `map` accepts a closure that captures anything -
+        // `map` enforces it in a const block, so a capturing one compiles under
+        // `cargo check` and only fails during codegen. The page this belongs to
+        // therefore travels through `with`, which carries the value alongside the
+        // stream instead.
         cosmic::iced::event::listen_with(|event, _, _| match event {
             cosmic::iced::event::Event::Keyboard(cosmic::iced::keyboard::Event::KeyPressed {
                 key,
@@ -227,7 +230,8 @@ impl page::Page<crate::pages::Message> for Page {
             }) => captured(modifiers, &key),
             _ => None,
         })
-        .map(move |kind| crate::pages::Message::AppShortcuts(Message { entity, kind }))
+        .with(self.entity)
+        .map(|(entity, kind)| crate::pages::Message::AppShortcuts(Message { entity, kind }))
     }
 }
 
