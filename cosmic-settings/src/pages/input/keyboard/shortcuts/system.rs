@@ -94,12 +94,10 @@ impl page::AutoBind<crate::pages::Message> for Page {}
 #[must_use]
 pub const fn actions() -> &'static [Action] {
     &[
-        Action::System(SystemAction::AppLibrary),
+        // No AppLibrary, Launcher, WorkspaceOverview, WindowSwitcher* or Screenshot:
+        // the launcher is out of the stack and nothing in the stack answers those
+        // system actions, so offering them would bind a key to nothing.
         Action::System(SystemAction::DisplayToggle),
-        Action::System(SystemAction::Launcher),
-        Action::System(SystemAction::WorkspaceOverview),
-        Action::System(SystemAction::WindowSwitcher),
-        Action::System(SystemAction::WindowSwitcherPrevious),
         Action::System(SystemAction::LogOut),
         Action::System(SystemAction::LockScreen),
         Action::System(SystemAction::Suspend),
@@ -115,7 +113,6 @@ pub const fn actions() -> &'static [Action] {
         Action::System(SystemAction::KeyboardBrightnessDown),
         Action::System(SystemAction::KeyboardBrightnessUp),
         Action::System(SystemAction::InputSourceSwitch),
-        Action::System(SystemAction::Screenshot),
         Action::System(SystemAction::Terminal),
         Action::System(SystemAction::HomeFolder),
         Action::System(SystemAction::WebBrowser),
