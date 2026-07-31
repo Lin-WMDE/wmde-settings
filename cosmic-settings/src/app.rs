@@ -217,6 +217,10 @@ impl cosmic::Application for SettingsApp {
         #[cfg(feature = "page-accessibility")]
         app.insert_page::<accessibility::Page>();
         let desktop_id = app.insert_page::<desktop::Page>().id();
+        // WMDE: panels are a top-level entry, not a sub-page of the desktop. There can be
+        // any number of them, and each one is a page of its own hanging off this list.
+        #[cfg(feature = "wayland")]
+        app.insert_page::<panel::Page>();
         #[cfg(feature = "page-display")]
         app.insert_page::<display::Page>();
         #[cfg(feature = "page-sound")]

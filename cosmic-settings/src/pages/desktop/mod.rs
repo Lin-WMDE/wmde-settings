@@ -36,12 +36,8 @@ impl page::AutoBind<crate::pages::Message> for Page {
         page = page.sub_page::<wallpaper::Page>();
         page = page.sub_page::<appearance::Page>();
 
-        #[cfg(feature = "wayland")]
-        {
-            // One page for all panels; the page of a single panel is registered at runtime
-            // by `panel::register_all`, because how many there are is a user's decision.
-            page = page.sub_page::<panel::Page>();
-        }
+        // Panels are not here: they are a nav entry of their own, registered by
+        // `SettingsApp::init`.
 
         #[cfg(feature = "page-window-management")]
         {
