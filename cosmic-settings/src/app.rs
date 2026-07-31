@@ -233,13 +233,18 @@ impl cosmic::Application for SettingsApp {
         // They reach past the keyboard - the compositor runs some, applications run
         // the rest - so a user looking for them has no reason to open input devices.
         #[cfg(feature = "page-input")]
-        app.insert_page::<input::keyboard::shortcuts::Page>();
+        let shortcuts_id = app.insert_page::<input::keyboard::shortcuts::Page>().id();
         app.insert_page::<applications::Page>();
         app.insert_page::<time::Page>();
         app.insert_page::<system::Page>();
 
         // WMDE: a page per configured panel, and per panel a page for its applets. How
         // many there are is a user's decision, so these cannot be registered by type.
+        // WMDE: a page per application that declares key bindings of its own. What is
+        // installed decides how many there are, so these cannot be registered by type.
+        #[cfg(feature = "page-input")]
+        input::keyboard::shortcuts::app_shortcuts::register_all(&mut app.pages, shortcuts_id);
+
         #[cfg(feature = "wayland")]
         panel::register_all(&mut app.pages);
 
@@ -522,6 +527,16 @@ impl cosmic::Application for SettingsApp {
                 #[cfg(feature = "wayland")]
                 crate::pages::Message::AppletSettings(message) => {
                     return pages::applets::update(&mut self.pages, message).map(Into::into);
+                }
+                // WMDE: one of these pages exists per application, so the message
+                // names its page rather than being routed by page type.
+                #[cfg(feature = "page-input")]
+                crate::pages::Message::AppShortcuts(message) => {
+                    return input::keyboard::shortcuts::app_shortcuts::update(
+                        &mut self.pages,
+                        message,
+                    )
+                    .map(Into::into);
                 }
                 #[cfg(feature = "page-accessibility")]
                 crate::pages::Message::AccessibilityMagnifier(message) => {

@@ -36,6 +36,8 @@ pub enum Message {
     AccessibilityMagnifier(accessibility::magnifier::Message),
     #[cfg(feature = "page-input")]
     AccessibilityShortcuts(input::keyboard::shortcuts::ShortcutMessage),
+    // WMDE: key bindings an application handles itself.
+    AppShortcuts(input::keyboard::shortcuts::app_shortcuts::Message),
     #[cfg(feature = "page-about")]
     About(system::about::Message),
     Appearance(desktop::appearance::Message),

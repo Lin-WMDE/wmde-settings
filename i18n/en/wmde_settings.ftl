@@ -797,6 +797,12 @@ custom-shortcuts = Custom shortcuts
     .context = Add custom shortcut
     .none = No custom shortcuts
 
+# WMDE: key bindings an application handles itself.
+app-shortcuts = Application shortcuts
+    .press = Press a combination
+    .add = Set
+    .none = No application declares shortcuts
+
 # WMDE: picking what to bind a key to, instead of typing a command from memory.
 shortcut-catalog = Application or action
     .search = Search

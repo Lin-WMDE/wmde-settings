@@ -126,7 +126,10 @@ impl page::Page<crate::pages::Message> for Page {
         &self,
         sections: &mut SlotMap<section::Entity, Section<crate::pages::Message>>,
     ) -> Option<page::Content> {
-        Some(vec![sections.insert(shortcuts())])
+        Some(vec![
+            sections.insert(shortcuts()),
+            sections.insert(applications()),
+        ])
     }
 
     fn info(&self) -> page::Info {
@@ -428,6 +431,49 @@ impl Search {
                 },
             )
     }
+}
+
+// WMDE: the applications that declare key bindings of their own. Their pages are
+// registered at runtime, so the list is read off the binder rather than written here.
+fn applications() -> Section<crate::pages::Message> {
+    crate::slab!(descriptions {
+        none = fl!("app-shortcuts", "none");
+    });
+
+    Section::default()
+        .title(fl!("app-shortcuts"))
+        .descriptions(descriptions)
+        .view::<Page>(move |binder, page, section| {
+            let descriptions = &section.descriptions;
+
+            // Only when nothing is being searched: the search results replace the
+            // categories above, and a list of applications under them would confuse
+            // what the results belong to.
+            if !page.search.input.is_empty() {
+                return widget::column::with_capacity(0).into();
+            }
+
+            let applications: Vec<_> = binder
+                .info
+                .iter()
+                .filter(|(_, info)| info.id.starts_with(app_shortcuts::page::ID_PREFIX))
+                .collect();
+
+            let mut list = settings::section().title(&section.title);
+
+            if applications.is_empty() {
+                list = list.add(widget::text::body(&descriptions[none]));
+            } else {
+                for (entity, info) in applications {
+                    list = list.add(crate::widget::go_next_item(
+                        info.title.as_str(),
+                        crate::pages::Message::Page(entity),
+                    ));
+                }
+            }
+
+            list.apply(cosmic::Element::from)
+        })
 }
 
 fn shortcuts() -> Section<crate::pages::Message> {

@@ -8,6 +8,8 @@
 
 pub mod action_name;
 pub mod declaration;
+pub mod page;
 
 pub use action_name::ActionName;
 pub use declaration::Declaration;
+pub use page::{Kind, Message, Page, register_all, update};
