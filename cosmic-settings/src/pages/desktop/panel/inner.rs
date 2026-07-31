@@ -219,45 +219,20 @@ pub(crate) fn style<
                         move |a| crate::app::Message::PageMessage(msg_map(a)),
                     ),
                 ))
-                .add(settings::item::builder(&descriptions[size]).flex_control({
-                    // TODO custom discrete slider variant
-                    row::with_children(vec![
-                        text::body(fl!("small")).into(),
-                        slider(
-                            0..=4,
-                            match inner.size {
-                                PanelSize::XS => 0,
-                                PanelSize::S => 1,
-                                PanelSize::M => 2,
-                                PanelSize::L => 3,
-                                PanelSize::XL => 4,
-                                PanelSize::Custom(_) => 2,
-                            },
-                            |v| {
-                                if v == 0 {
-                                    Message::PanelSize(PanelSize::XS)
-                                } else if v == 1 {
-                                    Message::PanelSize(PanelSize::S)
-                                } else if v == 2 {
-                                    Message::PanelSize(PanelSize::M)
-                                } else if v == 3 {
-                                    Message::PanelSize(PanelSize::L)
-                                } else {
-                                    Message::PanelSize(PanelSize::XL)
-                                }
-                            },
-                        )
-                        .on_release(Message::PanelSizeCommit)
-                        .width(Length::Fill)
-                        .apply(cosmic::widget::container)
-                        .max_width(250)
-                        .into(),
-                        text::body(fl!("large")).into(),
-                    ])
-                    .align_y(Alignment::Center)
-                    .spacing(8)
-                    .width(Length::Fill)
-                }))
+                // Pixels, not a ladder of named sizes: the thickness is the one panel
+                // measurement a user has an exact number in mind for. A named size still
+                // reads correctly here - it reports the height it comes out as.
+                .add(settings::item::builder(&descriptions[size]).control(
+                    cosmic::widget::spin_button(
+                        format!("{} px", inner.size.thickness()),
+                        "panel thickness",
+                        inner.size.thickness(),
+                        1,
+                        cosmic_panel_config::MIN_PANEL_THICKNESS,
+                        MAX_PANEL_THICKNESS,
+                        Message::PanelThickness,
+                    ),
+                ))
                 .add(
                     settings::item::builder(&descriptions[background_opacity]).flex_control({
                         row::with_capacity(2)
@@ -365,6 +340,10 @@ impl std::fmt::Display for Anchor {
     }
 }
 
+/// WMDE: the thickest a panel may be set to from the interface. Past this a bar is a wall,
+/// and the exclusive zone leaves nothing to work in.
+pub const MAX_PANEL_THICKNESS: u32 = 200;
+
 /// A [`PanelLook`] under its user-facing name. [`PanelLook::Auto`] has none: it is a rule for
 /// reading old configs, not something to offer.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -433,8 +412,7 @@ pub enum Message {
     PanelAnchor(usize),
     Output(usize),
     AnchorGap(bool),
-    PanelSize(PanelSize),
-    PanelSizeCommit,
+    PanelThickness(u32),
     Appearance(usize),
     Look(usize),
     ExtendToEdge(bool),
@@ -584,12 +562,15 @@ impl PageInner {
                 };
                 _ = panel_config.set_border_radius(helper, new_radius).unwrap();
             }
-            Message::PanelSize(size) => {
-                self.size = size;
-            }
-            Message::PanelSizeCommit => {
-                _ = panel_config.set_size(helper, self.size.clone());
-                // Reset any size overrides the user might have set
+            Message::PanelThickness(px) => {
+                let size = PanelSize::Custom(px.clamp(
+                    cosmic_panel_config::MIN_PANEL_THICKNESS,
+                    MAX_PANEL_THICKNESS,
+                ));
+                self.size = size.clone();
+                _ = panel_config.set_size(helper, size);
+                // Wings and centre may carry a size of their own, which would keep their
+                // applets at the old height on a bar that just changed.
                 _ = panel_config.set_size_center(helper, None);
                 _ = panel_config.set_size_wings(helper, None);
             }

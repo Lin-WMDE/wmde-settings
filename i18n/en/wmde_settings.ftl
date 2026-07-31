@@ -471,7 +471,7 @@ panel-style = Style
     .anchor-gap = Gap between panel and screen edges
     .extend = Extend panel to screen edges
     .appearance = Appearance
-    .size = Size
+    .size = Thickness
     .background-opacity = Background opacity
 
 panel-applets = Configuration
