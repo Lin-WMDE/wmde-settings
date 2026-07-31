@@ -1064,12 +1064,20 @@ impl SettingsApp {
 
     /// Activates the navbar item associated with a page.
     fn activate_navbar(&mut self, mut page: page::Entity) {
-        if let Some(parent) = self.pages.info[page].parent {
-            page = parent;
-        }
+        // WMDE: climb to the nearest ancestor that has a navbar item, rather than looking
+        // one level up. Panels are a nav entry three deep - the panel, its applet list, an
+        // applet's settings - and a single hop leaves the entry unhighlighted from the
+        // second level down.
+        loop {
+            if let Some(nav_id) = self.pages.data::<segmented_button::Entity>(page).copied() {
+                self.nav_model.activate(nav_id);
+                return;
+            }
 
-        if let Some(nav_id) = self.pages.data(page) {
-            self.nav_model.activate(*nav_id);
+            match self.pages.info.get(page).and_then(|info| info.parent) {
+                Some(parent) => page = parent,
+                None => return,
+            }
         }
     }
 
