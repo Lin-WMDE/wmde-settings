@@ -987,3 +987,4 @@ hardware-pci = Пристрої PCI
 applet-settings-none = Цей віджет не має налаштувань.
 applet-settings-too-new = Ці налаштування потребують новішої версії Налаштувань.
 applet-settings-reset = Скинути до типових
+applet-settings-open = Відкрити

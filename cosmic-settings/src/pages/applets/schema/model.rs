@@ -54,6 +54,15 @@ pub enum Row {
     /// Read-only prose. The escape hatch for a setting that exists but is not editable
     /// here - a list managed by right-clicking the applet, a map keyed by panel name.
     Note(String),
+    /// A jump to a page written in Rust. Used where the setting already has a home:
+    /// the applet's page says where to go instead of becoming a second writer.
+    Link { page: String, label: String },
+    /// A jump out of Settings entirely, into a program the applet ships.
+    ///
+    /// The escape hatch for what the vocabulary cannot express: a network search, a
+    /// preview, several keys written together. Anything reachable this way is by
+    /// definition beyond a declarative schema.
+    External { exec: String, label: String },
 }
 
 #[derive(Clone)]
@@ -179,6 +188,14 @@ pub mod raw {
         },
         Note {
             text: L10n,
+        },
+        Link {
+            page: String,
+            label: L10n,
+        },
+        External {
+            exec: String,
+            label: L10n,
         },
     }
 

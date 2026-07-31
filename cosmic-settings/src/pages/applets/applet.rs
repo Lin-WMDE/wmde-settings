@@ -135,6 +135,21 @@ impl Page {
             Message::TextCommit { slot, .. } => self.commit_text(slot),
 
             Message::Reset { .. } => self.reset(),
+
+            Message::Launch { exec, .. } => {
+                // Detached on purpose: the program the applet ships owns its own window,
+                // and Settings has no business waiting on it.
+                return cosmic::task::future(async move {
+                    cosmic::desktop::spawn_desktop_exec(
+                        exec,
+                        Vec::<(String, String)>::new(),
+                        None,
+                        false,
+                    )
+                    .await;
+                    crate::app::Message::None
+                });
+            }
         }
 
         Task::none()
@@ -169,7 +184,7 @@ impl Page {
                         .or_else(|| setting.default.clone())?;
                     Some((setting.slot, value))
                 }
-                Row::Note(_) => None,
+                _ => None,
             })
             .collect();
 
@@ -357,9 +372,9 @@ fn group_section(index: usize, group: &Group) -> Section<crate::pages::Message> 
     Section::default()
         .title(group.title.clone())
         .descriptions(descriptions)
-        .view::<Page>(move |_binder, page, _section| {
+        .view::<Page>(move |binder, page, _section| {
             match page.schema.as_ref().and_then(|s| s.groups.get(index)) {
-                Some(group) => control::group(group, page),
+                Some(group) => control::group(binder, group, page),
                 None => cosmic::widget::space().into(),
             }
         })

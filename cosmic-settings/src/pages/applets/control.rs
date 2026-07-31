@@ -18,14 +18,35 @@ use cosmic::iced::{Alignment, Length};
 use cosmic::widget::list::list_column::IntoListItem;
 use cosmic::widget::{column, dropdown, row, settings, slider, text, toggler};
 use cosmic::{Apply, Element, theme, widget};
+use cosmic_settings_page as page;
 
 /// Render one group as one settings card.
-pub fn group<'a>(group: &'a Group, page: &'a Page) -> Element<'a, crate::pages::Message> {
+pub fn group<'a>(
+    binder: &'a page::Binder<crate::pages::Message>,
+    group: &'a Group,
+    page: &'a Page,
+) -> Element<'a, crate::pages::Message> {
     let mut section = settings::section().title(group.title.as_str());
 
     for row in &group.rows {
         section = match row {
             Row::Note(text) => section.add(text::caption(text.as_str())),
+
+            // A link to a page this build does not have - a feature compiled out - is
+            // dropped rather than drawn dead: a chevron that goes nowhere is worse than
+            // a row that was never there.
+            Row::Link {
+                page: target,
+                label,
+            } => match find_page(binder, target) {
+                Some(entity) => section.add(crate::widget::go_next_item(
+                    label.as_str(),
+                    crate::pages::Message::Page(entity),
+                )),
+                None => section,
+            },
+
+            Row::External { exec, label } => section.add(external(exec, label, page)),
 
             Row::Setting(setting) => match &setting.control {
                 Control::Toggle => section.add(toggle(setting, page)),
@@ -68,6 +89,38 @@ fn toggle<'a>(setting: &'a Setting, page: &'a Page) -> impl IntoListItem<'a, cra
         }
         .into()
     })
+}
+
+/// A row that leaves Settings for a program the applet ships.
+fn external<'a>(
+    exec: &'a str,
+    label: &'a str,
+    page: &'a Page,
+) -> impl IntoListItem<'a, crate::pages::Message> + 'a {
+    let entity = page.entity();
+    let exec = exec.to_owned();
+
+    settings::item::builder(label).control(
+        widget::button::standard(fl!("applet-settings-open")).on_press(
+            Message::Launch {
+                page: entity,
+                exec,
+            }
+            .into(),
+        ),
+    )
+}
+
+/// The entity of a page written in Rust, by the id it registered under.
+fn find_page(
+    binder: &page::Binder<crate::pages::Message>,
+    id: &str,
+) -> Option<page::Entity> {
+    binder
+        .info
+        .iter()
+        .find(|(_, info)| info.id == id)
+        .map(|(entity, _)| entity)
 }
 
 /// An item builder carrying the setting's label and, if it has one, its description.

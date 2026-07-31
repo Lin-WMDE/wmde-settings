@@ -1127,3 +1127,4 @@ hardware-pci = PCI devices
 applet-settings-none = This applet has no settings.
 applet-settings-too-new = These settings need a newer version of Settings.
 applet-settings-reset = Reset to defaults
+applet-settings-open = Open

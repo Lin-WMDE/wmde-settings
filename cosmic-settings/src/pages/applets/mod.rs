@@ -90,6 +90,11 @@ pub enum Message {
     Reset {
         page: page::Entity,
     },
+    /// Run a program the applet ships, for what a declarative schema cannot express.
+    Launch {
+        page: page::Entity,
+        exec: String,
+    },
     /// A dropdown's popup surface. Not tied to a page - it goes straight to the shell.
     Surface(surface::Action),
 }
@@ -106,7 +111,8 @@ impl Message {
             | Self::TextDraft { page, .. }
             | Self::TextEditing { page, .. }
             | Self::TextCommit { page, .. }
-            | Self::Reset { page } => Some(*page),
+            | Self::Reset { page }
+            | Self::Launch { page, .. } => Some(*page),
             Self::Surface(_) => None,
         }
     }

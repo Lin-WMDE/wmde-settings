@@ -149,6 +149,24 @@ fn convert(row: raw::Row, languages: &[String], slots: &mut usize) -> Option<Row
     match row {
         raw::Row::Note { text } => Some(Row::Note(l10n::resolve(&text, languages))),
 
+        raw::Row::Link { page, label } => Some(Row::Link {
+            page,
+            label: l10n::resolve(&label, languages),
+        }),
+
+        raw::Row::External { exec, label } => {
+            // An empty command would render a button that does nothing at all.
+            if exec.trim().is_empty() {
+                warn!("dropping external row: no command");
+                return None;
+            }
+
+            Some(Row::External {
+                exec,
+                label: l10n::resolve(&label, languages),
+            })
+        }
+
         raw::Row::Setting {
             key,
             label,
