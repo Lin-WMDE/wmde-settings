@@ -6,6 +6,7 @@ pub mod arrangement;
 
 use crate::{app, pages};
 use arrangement::Arrangement;
+use cosmic::cosmic_config::{self, ConfigGet, ConfigSet};
 use cosmic::iced::core::text::{Ellipsize, EllipsizeHeightLimit};
 use cosmic::iced::widget::scrollable::RelativeOffset;
 use cosmic::iced::{Alignment, Length, stream, time};
@@ -13,6 +14,7 @@ use cosmic::widget::{
     self, column, container, dropdown, list_column, segmented_button, tab_bar, text,
 };
 use cosmic::{Apply, Element, Task, surface};
+use cosmic_comp_config::CosmicCompConfig;
 use cosmic_randr_shell::{
     AdaptiveSyncAvailability, AdaptiveSyncState, List, Output, OutputKey, Transform,
 };
@@ -108,6 +110,12 @@ pub enum Message {
         /// Available outputs from wmde-randr.
         randr: Arc<Result<List, cosmic_randr_shell::Error>>,
     },
+    /// WMDE: the compositor config changed elsewhere, refresh the cached pointer-crossing bools.
+    CompConfigUpdate(Box<CosmicCompConfig>),
+    /// WMDE: toggles proportional pointer remapping across the edge between displays.
+    PointerEdgeRemap(bool),
+    /// WMDE: toggles that remapping while a window move grab is active.
+    PointerEdgeRemapWhileDragging(bool),
     Surface(surface::Action),
 }
 
@@ -153,10 +161,41 @@ pub struct Page {
     dialog_countdown: usize,
     show_display_options: bool,
     adjusted_scale: u32,
+    // WMDE: proportional pointer crossing lives on this page because it is a property of
+    // the layout - of the edge between two displays - and not of any single display.
+    comp_config: cosmic_config::Config,
+    pointer_edge_remap: bool,
+    pointer_edge_remap_while_dragging: bool,
 }
 
 impl Default for Page {
     fn default() -> Self {
+        // WMDE: same handle and register as the window-management page. Fallbacks come
+        // from CosmicCompConfig::default() so they cannot drift from the compositor's.
+        let comp_config = cosmic_config::Config::new(
+            crate::config::COSMIC_COMP_CONFIG,
+            crate::config::COSMIC_COMP_CONFIG_VERSION,
+        )
+        .unwrap();
+        let comp_defaults = CosmicCompConfig::default();
+        let pointer_edge_remap = comp_config.get("pointer_edge_remap").unwrap_or_else(|err| {
+            if err.is_err() {
+                tracing::error!(?err, "Failed to read config 'pointer_edge_remap'");
+            }
+            comp_defaults.pointer_edge_remap
+        });
+        let pointer_edge_remap_while_dragging = comp_config
+            .get("pointer_edge_remap_while_dragging")
+            .unwrap_or_else(|err| {
+                if err.is_err() {
+                    tracing::error!(
+                        ?err,
+                        "Failed to read config 'pointer_edge_remap_while_dragging'"
+                    );
+                }
+                comp_defaults.pointer_edge_remap_while_dragging
+            });
+
         Self {
             refreshing_page: Arc::new(AtomicBool::new(false)),
             list: List::default(),
@@ -175,6 +214,9 @@ impl Default for Page {
             dialog_countdown: 0,
             show_display_options: true,
             adjusted_scale: 0,
+            comp_config,
+            pointer_edge_remap,
+            pointer_edge_remap_while_dragging,
         }
     }
 }
@@ -654,6 +696,37 @@ impl Page {
                 }
 
                 self.refreshing_page.store(false, Ordering::SeqCst);
+            }
+
+            // WMDE: without this the cached bools are read once in `Default` and the row would
+            // write the negation of a stale value back over whoever changed it.
+            Message::CompConfigUpdate(comp_config) => {
+                self.pointer_edge_remap = comp_config.pointer_edge_remap;
+                self.pointer_edge_remap_while_dragging =
+                    comp_config.pointer_edge_remap_while_dragging;
+                // Returns early: this arrives for every compositor config key, and the tail of
+                // this function re-centres the arrangement pan.
+                return Task::none();
+            }
+
+            Message::PointerEdgeRemap(value) => {
+                self.pointer_edge_remap = value;
+                if let Err(err) = self.comp_config.set("pointer_edge_remap", value) {
+                    tracing::error!(?err, "Failed to set config 'pointer_edge_remap'");
+                }
+            }
+
+            Message::PointerEdgeRemapWhileDragging(value) => {
+                self.pointer_edge_remap_while_dragging = value;
+                if let Err(err) = self
+                    .comp_config
+                    .set("pointer_edge_remap_while_dragging", value)
+                {
+                    tracing::error!(
+                        ?err,
+                        "Failed to set config 'pointer_edge_remap_while_dragging'"
+                    );
+                }
             }
 
             Message::Surface(a) => {
@@ -1190,6 +1263,11 @@ pub fn display_arrangement() -> Section<crate::pages::Message> {
     crate::slab!(descriptions {
         _display_arrangement = fl!("display", "arrangement");
         display_arrangement_desc = fl!("display", "arrangement-desc");
+        // WMDE: proportional pointer crossing, and whether it applies to a dragged window.
+        pointer_crossing_label = fl!("pointer-crossing");
+        pointer_crossing_desc = fl!("pointer-crossing", "desc");
+        pointer_crossing_drag = fl!("pointer-crossing", "while-dragging");
+        pointer_crossing_drag_desc = fl!("pointer-crossing", "while-dragging-desc");
     });
 
     Section::default()
@@ -1203,7 +1281,7 @@ pub fn display_arrangement() -> Section<crate::pages::Message> {
                 space_xxs, space_m, ..
             } = cosmic::theme::spacing();
 
-            column::with_capacity(2)
+            let arrangement = column::with_capacity(2)
                 .push(
                     text::body(&descriptions[display_arrangement_desc])
                         .apply(container)
@@ -1224,7 +1302,33 @@ pub fn display_arrangement() -> Section<crate::pages::Message> {
                 })
                 .apply(container)
                 .class(cosmic::theme::Container::List)
-                .width(Length::Fill)
+                .width(Length::Fill);
+
+            // WMDE: the remap is a property of the edge between two displays, so it is one
+            // switch for the whole layout and not a per-display flag. The dependent row is
+            // rendered disabled while the parent is off, not hidden.
+            let pointer_crossing_rows = list_column()
+                .add(
+                    widget::settings::item::builder(&descriptions[pointer_crossing_label])
+                        .description(&descriptions[pointer_crossing_desc])
+                        .toggler(page.pointer_edge_remap, Message::PointerEdgeRemap),
+                )
+                .add(
+                    widget::settings::item::builder(&descriptions[pointer_crossing_drag])
+                        .description(&descriptions[pointer_crossing_drag_desc])
+                        .toggler_maybe(
+                            page.pointer_edge_remap_while_dragging,
+                            page.pointer_edge_remap
+                                .then_some(Message::PointerEdgeRemapWhileDragging),
+                        ),
+                )
+                .apply(Element::from)
+                .map(pages::Message::Displays);
+
+            column::with_capacity(2)
+                .spacing(space_m)
+                .push(arrangement)
+                .push(pointer_crossing_rows)
                 .into()
         })
 }

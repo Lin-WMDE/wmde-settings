@@ -573,6 +573,13 @@ display = Displays
     .scale = Scale
     .additional-scale-options = Additional scale options
 
+# WMDE: the pointer is remapped proportionally when it crosses the edge between two
+# displays whose logical sizes along that edge differ.
+pointer-crossing = Proportional pointer crossing between displays
+    .desc = The pointer enters the neighbouring display at the same fraction of its edge. When off it keeps its coordinate and part of the larger display stays out of reach.
+    .while-dragging = Apply while dragging a window
+    .while-dragging-desc = Off: a window crosses the boundary without a jump
+
 mirroring = Mirroring
     .id = Mirroring { $id }
     .dont = Don't mirror

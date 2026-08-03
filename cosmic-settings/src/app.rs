@@ -848,6 +848,18 @@ impl cosmic::Application for SettingsApp {
                     );
                 }
 
+                // WMDE: the Displays page caches the two pointer-crossing keys, so it has to
+                // hear about changes made anywhere else too.
+                #[cfg(feature = "page-display")]
+                if let Some(page) = self.pages.page_mut::<crate::pages::display::Page>() {
+                    tasks.push(
+                        page.update(crate::pages::display::Message::CompConfigUpdate(
+                            comp_config.clone(),
+                        ))
+                        .map(Into::into),
+                    );
+                }
+
                 #[cfg(feature = "page-accessibility")]
                 if let Some(page) = self.pages.page_mut::<accessibility::magnifier::Page>() {
                     tasks.push(

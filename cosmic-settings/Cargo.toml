@@ -160,7 +160,7 @@ page-bluetooth = [
 ]
 page-date = ["dep:timedate-zbus", "dep:zbus"]
 page-default-apps = ["dep:cosmic-settings-config", "dep:mime-apps"]
-page-display = ["dep:udev"]
+page-display = ["cosmic-comp-config", "dep:udev"]
 page-input = [
     "cosmic-comp-config",
     "gettext",
