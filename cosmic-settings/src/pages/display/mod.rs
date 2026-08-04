@@ -714,6 +714,8 @@ impl Page {
                 if let Err(err) = self.comp_config.set("pointer_edge_remap", value) {
                     tracing::error!(?err, "Failed to set config 'pointer_edge_remap'");
                 }
+                // Returns early for the same reason as CompConfigUpdate above.
+                return Task::none();
             }
 
             Message::PointerEdgeRemapWhileDragging(value) => {
@@ -727,6 +729,7 @@ impl Page {
                         "Failed to set config 'pointer_edge_remap_while_dragging'"
                     );
                 }
+                return Task::none();
             }
 
             Message::Surface(a) => {
