@@ -19,7 +19,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 use std::sync::Arc;
 
-const AUDIO_CONFIG: &str = "com.system76.CosmicAudio";
+const AUDIO_CONFIG: &str = "fun.wmde.Audio";
 const AMPLIFICATION_SINK: &str = "amplification_sink";
 
 #[derive(Clone, Debug)]
