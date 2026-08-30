@@ -1473,7 +1473,7 @@ dependencies = [
 
 [[package]]
 name = "cosmic-settings-a11y-manager-subscription"
-version = "1.0.7"
+version = "1.7.0"
 dependencies = [
  "cosmic-protocols",
  "iced_futures",
@@ -1486,7 +1486,7 @@ dependencies = [
 
 [[package]]
 name = "cosmic-settings-accessibility-subscription"
-version = "1.0.7"
+version = "1.7.0"
 dependencies = [
  "cosmic-dbus-a11y",
  "futures",
@@ -1498,7 +1498,7 @@ dependencies = [
 
 [[package]]
 name = "cosmic-settings-airplane-mode-subscription"
-version = "1.0.7"
+version = "1.7.0"
 dependencies = [
  "futures",
  "iced_futures",
@@ -1534,7 +1534,7 @@ dependencies = [
 
 [[package]]
 name = "cosmic-settings-bluetooth-subscription"
-version = "1.0.7"
+version = "1.7.0"
 dependencies = [
  "bluez-zbus",
  "futures",
@@ -1573,7 +1573,7 @@ dependencies = [
 
 [[package]]
 name = "cosmic-settings-daemon-subscription"
-version = "1.0.7"
+version = "1.7.0"
 dependencies = [
  "futures",
  "iced_futures",
@@ -1585,7 +1585,7 @@ dependencies = [
 
 [[package]]
 name = "cosmic-settings-page"
-version = "1.0.7"
+version = "1.7.0"
 dependencies = [
  "derive_setters",
  "downcast-rs 2.0.2",
@@ -1598,7 +1598,7 @@ dependencies = [
 
 [[package]]
 name = "cosmic-settings-sound"
-version = "0.1.0"
+version = "1.7.0"
 dependencies = [
  "cosmic-settings-audio-client",
  "futures",
@@ -1609,7 +1609,7 @@ dependencies = [
 
 [[package]]
 name = "cosmic-settings-upower-subscription"
-version = "1.0.7"
+version = "1.7.0"
 dependencies = [
  "futures",
  "iced_futures",
@@ -1622,7 +1622,7 @@ dependencies = [
 
 [[package]]
 name = "cosmic-settings-wallpaper"
-version = "1.0.7"
+version = "1.7.0"
 dependencies = [
  "cosmic-randr-shell",
  "dirs",
@@ -8682,7 +8682,7 @@ dependencies = [
 
 [[package]]
 name = "wmde-settings"
-version = "1.6.0"
+version = "1.7.0"
 dependencies = [
  "accounts-zbus",
  "anyhow",
