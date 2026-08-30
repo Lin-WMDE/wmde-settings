@@ -44,7 +44,11 @@ pub struct Page {
 impl Default for Page {
     fn default() -> Self {
         let daemon_helper = CosmicSettingsDaemonConfig::config().unwrap();
-        let comp_helper = cosmic_config::Config::new("com.system76.CosmicComp", 1).unwrap();
+        let comp_helper = cosmic_config::Config::new(
+            crate::config::COSMIC_COMP_CONFIG,
+            crate::config::COSMIC_COMP_CONFIG_VERSION,
+        )
+        .unwrap();
         let comp_config =
             CosmicCompConfig::get_entry(&comp_helper).unwrap_or_else(|(errs, config)| {
                 for err in errs {
