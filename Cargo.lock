@@ -8682,7 +8682,7 @@ dependencies = [
 
 [[package]]
 name = "wmde-settings"
-version = "1.5.0"
+version = "1.6.0"
 dependencies = [
  "accounts-zbus",
  "anyhow",
