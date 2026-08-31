@@ -76,6 +76,11 @@ pub enum PageCommands {
         #[command(subcommand)]
         command: Option<AppearanceCommands>,
     },
+    /// Settings page of one applet, named by the id of its desktop entry
+    Applet {
+        /// Desktop id of the applet, e.g. fun.wmde.AppletWeather
+        id: String,
+    },
     /// Applications settings page
     Applications,
     /// Bluetooth settings page

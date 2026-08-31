@@ -79,6 +79,18 @@ impl SettingsApp {
             PageCommands::Appearance { command: _ } => {
                 self.pages.page_id::<desktop::appearance::Page>()
             }
+            // WMDE: the settings page of one applet. These pages are registered at runtime,
+            // one per panel over the same config, so there is no type to name here and any
+            // of the copies will do. Nothing about a particular applet is known here: the
+            // id arrives from the caller and is matched against `applet:<list>:<id>`.
+            PageCommands::Applet { id } => {
+                let suffix = format!(":{id}");
+                self.pages
+                    .info
+                    .iter()
+                    .find(|(_, info)| info.id.starts_with("applet:") && info.id.ends_with(&suffix))
+                    .map(|(entity, _)| entity)
+            }
             PageCommands::Applications => self.pages.page_id::<applications::Page>(),
             #[cfg(feature = "page-bluetooth")]
             PageCommands::Bluetooth => self.pages.page_id::<bluetooth::Page>(),
