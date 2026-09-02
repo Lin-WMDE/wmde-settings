@@ -18,8 +18,12 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use tracing::warn;
 
-/// Directory under each XDG data directory that holds the schemas.
-const SUBDIR: &str = "wmde/applet-settings";
+/// Directory under each XDG data directory that holds applet schemas.
+pub const APPLET_SUBDIR: &str = "wmde/applet-settings";
+
+/// The same, for parts of the desktop that are not applets: the screenshot tool, and
+/// whatever else grows a settings page without living on a panel.
+pub const COMPONENT_SUBDIR: &str = "wmde/component-settings";
 
 /// RON insists on `Some(x)` for every `Option` field unless this extension is on. Schema
 /// files are written by hand, so the parser carries that burden rather than the author.
@@ -52,11 +56,16 @@ pub fn data_dirs() -> Vec<PathBuf> {
 /// file. A file that fails to parse is skipped with a warning rather than taken as
 /// "this applet has no settings": the two are different, and only one is a bug.
 pub fn load_all() -> HashMap<String, Schema> {
+    load_all_in(APPLET_SUBDIR)
+}
+
+/// Every schema in one directory, keyed by the id of the `.desktop` file it belongs to.
+pub fn load_all_in(subdir: &str) -> HashMap<String, Schema> {
     let languages = get_languages_from_env();
     let mut found: HashMap<String, Schema> = HashMap::new();
 
     for dir in data_dirs() {
-        let Ok(entries) = std::fs::read_dir(dir.join(SUBDIR)) else {
+        let Ok(entries) = std::fs::read_dir(dir.join(subdir)) else {
             continue;
         };
 

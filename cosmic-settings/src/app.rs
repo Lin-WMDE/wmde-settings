@@ -247,6 +247,10 @@ impl cosmic::Application for SettingsApp {
         #[cfg(feature = "page-input")]
         let shortcuts_id = app.insert_page::<input::keyboard::shortcuts::Page>().id();
         app.insert_page::<applications::Page>();
+        // WMDE: parts of the desktop that are not applets and still have settings. What
+        // is installed decides how many there are, so the children are registered below
+        // rather than by type.
+        let components_id = app.insert_page::<pages::components::Page>().id();
         app.insert_page::<time::Page>();
         app.insert_page::<system::Page>();
 
@@ -259,6 +263,8 @@ impl cosmic::Application for SettingsApp {
 
         #[cfg(feature = "wayland")]
         panel::register_all(&mut app.pages);
+
+        pages::components::register_all(&mut app.pages, components_id);
 
         // WMDE: the settings pages of the applets themselves are registered per panel, by
         // `panel::register_all` above. This only reports a schema that matches nothing.

@@ -38,6 +38,14 @@ pub struct Page {
 }
 
 impl Page {
+    /// The settings page of one part of the desktop that is not an applet: no panel owns
+    /// it, so there is no parent to namespace the id by.
+    pub fn for_component(applet: Applet<'static>, schema: Option<Schema>) -> Self {
+        let mut page = Self::new("", applet, schema);
+        page.id = format!("component:{}", page.applet.id);
+        page
+    }
+
     pub fn new(parent_id: &str, applet: Applet<'static>, schema: Option<Schema>) -> Self {
         let values = vec![None; schema.as_ref().map_or(0, |schema| schema.slots)];
 

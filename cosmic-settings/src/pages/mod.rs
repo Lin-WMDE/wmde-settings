@@ -8,6 +8,7 @@ pub mod accessibility;
 /// WMDE: applet settings pages, built at runtime from installed schemas.
 #[cfg(feature = "wayland")]
 pub mod applets;
+pub mod components;
 pub mod applications;
 #[cfg(feature = "page-bluetooth")]
 pub mod bluetooth;
