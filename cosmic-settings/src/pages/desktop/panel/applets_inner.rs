@@ -8,7 +8,9 @@ use cosmic::iced::id::Internal;
 
 use cosmic::iced;
 use cosmic::iced::core::clipboard::IconSurface;
-use cosmic::widget::{Column, button, column, container, icon, list_column, row, text, text_input};
+use cosmic::widget::{
+    Column, button, column, container, icon, list_column, row, text, text_input, tooltip,
+};
 
 use cosmic::cosmic_config::{Config, ConfigGet, CosmicConfigEntry};
 use cosmic::iced::core::widget::{Operation, Tree, tree};
@@ -339,10 +341,17 @@ impl Page {
                         .into(),
                     // WMDE: settings are reachable before the applet is placed, so an
                     // applet the user has not added is not also unconfigurable.
-                    button::icon(icon::from_name("preferences-system-symbolic"))
-                        .extra_small()
-                        .on_press(msg_map(Message::DetailStart(info.id.to_string())))
-                        .into(),
+                    //
+                    // The gear sits right against the labelled "Add" button and reads as
+                    // part of it, so it has to name itself.
+                    tooltip(
+                        button::icon(icon::from_name("preferences-system-symbolic"))
+                            .extra_small()
+                            .on_press(msg_map(Message::DetailStart(info.id.to_string()))),
+                        text::body(fl!("applet-settings")),
+                        tooltip::Position::Top,
+                    )
+                    .into(),
                     button::text(fl!("add"))
                         .on_press(msg_map(Message::AddApplet(info.clone())))
                         .into(),
@@ -758,14 +767,25 @@ impl<'a, Message: 'static + Clone> AppletReorderList<'a, Message> {
                             })
                             .into(),
                         // WMDE: opens the applet's own settings page.
-                        button::icon(icon::from_name("preferences-system-symbolic"))
-                            .extra_small()
-                            .on_press(on_details(id_clone.clone()))
-                            .into(),
-                        button::icon(icon::from_name("edit-delete-symbolic"))
-                            .extra_small()
-                            .on_press(on_remove(id_clone.clone()))
-                            .into(),
+                        //
+                        // Two unlabelled icons stand side by side here, and the second one
+                        // takes the applet off the panel without asking.
+                        tooltip(
+                            button::icon(icon::from_name("preferences-system-symbolic"))
+                                .extra_small()
+                                .on_press(on_details(id_clone.clone())),
+                            text::body(fl!("applet-settings")),
+                            tooltip::Position::Top,
+                        )
+                        .into(),
+                        tooltip(
+                            button::icon(icon::from_name("edit-delete-symbolic"))
+                                .extra_small()
+                                .on_press(on_remove(id_clone.clone())),
+                            text::body(fl!("remove")),
+                            tooltip::Position::Top,
+                        )
+                        .into(),
                     ])
                     .spacing(space_xs)
                     .align_y(Alignment::Center)

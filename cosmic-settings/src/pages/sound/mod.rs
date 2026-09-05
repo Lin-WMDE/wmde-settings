@@ -358,7 +358,9 @@ fn input() -> Section<crate::pages::Message> {
 
             let volume_control = widget::row::with_capacity(4)
                 .align_y(Alignment::Center)
-                .push(
+                // WMDE: no label, and the two states of the icon share a silhouette -
+                // muting the microphone deserves words.
+                .push(widget::tooltip(
                     widget::button::icon(widget::icon::from_name(
                         if page.model.active_source.mute {
                             "microphone-sensitivity-muted-symbolic"
@@ -367,7 +369,13 @@ fn input() -> Section<crate::pages::Message> {
                         },
                     ))
                     .on_press(Message::ToggleSourceMute.into()),
-                )
+                    widget::text::body(if page.model.active_source.mute {
+                        fl!("unmute-microphone")
+                    } else {
+                        fl!("mute-microphone")
+                    }),
+                    widget::tooltip::Position::Top,
+                ))
                 .push(
                     widget::text::body(&page.model.active_source.volume_text)
                         .width(Length::Fixed(22.0))
@@ -439,14 +447,22 @@ fn output() -> Section<crate::pages::Message> {
 
             let volume_control = widget::row::with_capacity(4)
                 .align_y(Alignment::Center)
-                .push(
+                // WMDE: the same unlabelled mute button as on the applications page; the
+                // nearest words are the section heading.
+                .push(widget::tooltip(
                     widget::button::icon(if page.model.active_sink.mute {
                         widget::icon::from_name("audio-volume-muted-symbolic")
                     } else {
                         widget::icon::from_name("audio-volume-high-symbolic")
                     })
                     .on_press(Message::ToggleSinkMute.into()),
-                )
+                    widget::text::body(if page.model.active_sink.mute {
+                        fl!("unmute")
+                    } else {
+                        fl!("mute")
+                    }),
+                    widget::tooltip::Position::Top,
+                ))
                 .push(
                     widget::text::body(&page.model.active_sink.volume_text)
                         .width(Length::Fixed(22.0))

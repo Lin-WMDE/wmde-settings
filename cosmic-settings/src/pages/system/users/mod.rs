@@ -833,11 +833,17 @@ fn user_list() -> Section<crate::pages::Message> {
                         .clone()
                         .unwrap_or_else(|| page.default_icon.clone());
 
-                    let profile_icon = widget::button::icon(profile_icon_handle)
-                        .large()
-                        .padding(0)
-                        .class(cosmic::theme::Button::Standard)
-                        .on_press(Message::SelectProfileImage(user.id));
+                    // WMDE: the avatar looks like a picture in the row, not like a control;
+                    // the label is the one the picker dialog is titled with.
+                    let profile_icon = widget::tooltip(
+                        widget::button::icon(profile_icon_handle)
+                            .large()
+                            .padding(0)
+                            .class(cosmic::theme::Button::Standard)
+                            .on_press(Message::SelectProfileImage(user.id)),
+                        text::body(fl!("users", "profile-add")),
+                        widget::tooltip::Position::Top,
+                    );
 
                     let account_details_content = settings::item_row(vec![
                         widget::row::with_capacity(2)

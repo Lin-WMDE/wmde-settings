@@ -373,10 +373,12 @@ custom-shortcuts = Власні сполучення
     .add = Додати сполучення
     .context = Додати користувацькі сполучення
     .none = Немає користувацьких сполучень
+    .remove = Вилучити сполучення
 app-shortcuts = Сполучення застосунків
     .press = Натисніть сполучення
     .add = Задати
     .none = Жоден застосунок не оголошує сполучень
+    .reset = Скинути до типового
 shortcut-catalog = Застосунок або дія
     .search = Пошук
     .none = Нічого не знайдено
@@ -771,6 +773,7 @@ keyboard-numlock-boot = Numlock
     .set = Задати стан Numlock при запуску системи
 show-extended-input-sources = Показувати розширені джерела введення
 add-another-keybinding = Додати сполучення
+remove-keybinding = Вилучити сполучення клавіш
 input-source-switch = Змінити розкладку клавіатури
 zoom-in = Наблизити
 zoom-out = Віддалити
@@ -810,6 +813,7 @@ startup-apps = Автозапуск
     .remove-dialog-title = Вилучити { $name }?
     .remove-dialog-description = Вилучити цей застосунок з автозапуску?
     .add-startup-app = Додати застосунок до автозапуску
+    .remove = Вилучити з автозапуску
 legacy-applications = Сумісність із застосунками X11
 legacy-app-global-shortcuts = Глобальні сполучення клавіш у застосунках X11
     .desc = Глобальні сполучення дозволяють іншим застосункам реагувати на натискання клавіш і кнопок миші, навіть якщо вони виконані в іншому застосунку, наприклад, для функцій активації або вимкнення голосу кнопкою. Типово ця функція вимкнена у застосунках X11, щоб уникнути перехоплення чутливої інформації.
@@ -1006,3 +1010,15 @@ applet-settings-reset = Скинути до типових
 applet-settings-open = Відкрити
 
 components = Складові
+
+## WMDE: labels of icon-only buttons, shown as tooltips
+
+more-options = Більше дій
+search-settings = Пошук у налаштуваннях
+applet-settings = Налаштування віджета
+mute = Вимкнути звук
+unmute = Увімкнути звук
+mute-microphone = Вимкнути мікрофон
+unmute-microphone = Увімкнути мікрофон
+show-details = Показати подробиці
+hide-details = Сховати подробиці

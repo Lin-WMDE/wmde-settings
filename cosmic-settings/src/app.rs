@@ -366,11 +366,17 @@ impl cosmic::Application for SettingsApp {
                 .on_submit(|_| Message::SearchSubmit)
                 .into()
         } else {
-            icon::from_name("system-search-symbolic")
-                .apply(button::icon)
-                .padding(8)
-                .on_press(Message::SearchActivate)
-                .into()
+            // WMDE: the only control in the header, and it carries no label of its own -
+            // while the search field is collapsed the icon is all the user gets.
+            cosmic::widget::tooltip(
+                icon::from_name("system-search-symbolic")
+                    .apply(button::icon)
+                    .padding(8)
+                    .on_press(Message::SearchActivate),
+                cosmic::widget::text::body(crate::fl!("search-settings")),
+                cosmic::widget::tooltip::Position::Bottom,
+            )
+            .into()
         });
 
         widgets

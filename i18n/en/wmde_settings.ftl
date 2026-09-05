@@ -780,6 +780,7 @@ keyboard-shortcuts = Keyboard shortcuts
     .desc = View and customize shortcuts
 
 add-another-keybinding = Add another keybinding
+remove-keybinding = Remove key combination
 cancel = Cancel
 command = Command
 custom = Custom
@@ -806,12 +807,14 @@ custom-shortcuts = Custom shortcuts
     .add = Add shortcut
     .context = Add custom shortcut
     .none = No custom shortcuts
+    .remove = Delete shortcut
 
 # WMDE: key bindings an application handles itself.
 app-shortcuts = Application shortcuts
     .press = Press a combination
     .add = Set
     .none = No application declares shortcuts
+    .reset = Reset to default
 
 # WMDE: picking what to bind a key to, instead of typing a command from memory.
 shortcut-catalog = Application or action
@@ -1033,6 +1036,7 @@ startup-apps = Startup applications
     .remove-dialog-title = Remove { $name }?
     .remove-dialog-description = Remove this startup application?
     .add-startup-app = Add startup application
+    .remove = Remove from startup
 
 ## Applications: Legacy applications
 
@@ -1158,3 +1162,15 @@ applet-settings-reset = Reset to defaults
 applet-settings-open = Open
 
 components = Components
+
+## WMDE: labels of icon-only buttons, shown as tooltips
+
+more-options = More options
+search-settings = Search settings
+applet-settings = Applet settings
+mute = Mute
+unmute = Unmute
+mute-microphone = Mute microphone
+unmute-microphone = Unmute microphone
+show-details = Show details
+hide-details = Hide details

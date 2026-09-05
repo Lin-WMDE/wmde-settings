@@ -295,7 +295,14 @@ fn popover_button(
             .on_close(Message::ExpandInputSourcePopover(None))
             .into()
     } else {
-        button.into()
+        // WMDE: the row shows a layout on the left and a bare icon on the right; nothing
+        // says what the icon does.
+        widget::tooltip(
+            button,
+            widget::text::body(fl!("more-options")),
+            widget::tooltip::Position::Top,
+        )
+        .into()
     }
 }
 

@@ -791,7 +791,13 @@ fn popover_button(id: usize, expanded: bool) -> Element<'static, Message> {
             .on_close(Message::ExpandLanguagePopover(None))
             .into()
     } else {
-        button.into()
+        // WMDE: reordering the language list happens only through this unlabelled ellipsis.
+        widget::tooltip(
+            button,
+            widget::text::body(fl!("more-options")),
+            widget::tooltip::Position::Top,
+        )
+        .into()
     }
 }
 

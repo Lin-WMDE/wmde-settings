@@ -364,14 +364,18 @@ pub fn view() -> Section<crate::pages::Message> {
 
             let volume_controls = widget::row::with_capacity(5)
                 .align_y(Alignment::Center)
-                .push(
+                // WMDE: the icon reports the state, but not the action it performs, and
+                // the only label in the row is the application's own name.
+                .push(widget::tooltip(
                     widget::button::icon(widget::icon::from_name(if mute {
                         "audio-volume-muted-symbolic"
                     } else {
                         "audio-volume-high-symbolic"
                     }))
                     .on_press(Message::SetMute(node_id, !mute)),
-                )
+                    widget::text::body(if mute { fl!("unmute") } else { fl!("mute") }),
+                    widget::tooltip::Position::Top,
+                ))
                 .push(
                     widget::text::body(volume.to_string())
                         .width(Length::Fixed(22.))
@@ -379,14 +383,21 @@ pub fn view() -> Section<crate::pages::Message> {
                 )
                 .push(horizontal_space().width(8.))
                 .push(slider)
-                .push(
+                // WMDE: a bare arrow says nothing about what unfolds behind it.
+                .push(widget::tooltip(
                     widget::button::icon(widget::icon::from_name(if expanded {
                         "go-up-symbolic"
                     } else {
                         "go-down-symbolic"
                     }))
                     .on_press(Message::ToggleExpanded(node_id)),
-                )
+                    widget::text::body(if expanded {
+                        fl!("hide-details")
+                    } else {
+                        fl!("show-details")
+                    }),
+                    widget::tooltip::Position::Top,
+                ))
                 .apply(Element::from)
                 .map(crate::pages::Message::from);
 

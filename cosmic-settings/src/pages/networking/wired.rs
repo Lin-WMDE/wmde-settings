@@ -533,9 +533,15 @@ impl Page {
                             )
                             .apply(|e| Some(Element::from(e)))
                     } else {
-                        view_more_button
-                            .on_press(Message::ViewMore(Some(connection.uuid.clone())))
-                            .apply(|e| Some(Element::from(e)))
+                        // WMDE: while the menu is closed the row shows a bare ellipsis, and
+                        // the labelled button beside it belongs to another action.
+                        widget::tooltip(
+                            view_more_button
+                                .on_press(Message::ViewMore(Some(connection.uuid.clone()))),
+                            widget::text::body(fl!("more-options")),
+                            widget::tooltip::Position::Top,
+                        )
+                        .apply(|e| Some(Element::from(e)))
                     };
 
                     let controls = widget::row::with_capacity(2)

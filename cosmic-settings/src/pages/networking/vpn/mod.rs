@@ -1003,9 +1003,13 @@ fn devices_view() -> Section<crate::pages::Message> {
                                 )
                                 .apply(|e| Some(Element::from(e)))
                         } else {
-                            view_more_button
-                                .on_press(Message::ViewMore(Some(uuid.clone())))
-                                .apply(|e| Some(Element::from(e)))
+                            // WMDE: same unlabelled ellipsis as the wired connection rows.
+                            widget::tooltip(
+                                view_more_button.on_press(Message::ViewMore(Some(uuid.clone()))),
+                                widget::text::body(fl!("more-options")),
+                                widget::tooltip::Position::Top,
+                            )
+                            .apply(|e| Some(Element::from(e)))
                         };
 
                         let controls = widget::row::with_capacity(2)

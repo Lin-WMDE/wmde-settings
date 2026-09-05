@@ -823,9 +823,15 @@ fn context_drawer<'a>(
             children.push(input);
 
             if shortcut.is_saved {
-                let delete_button = widget::button::icon(icon::from_name("edit-delete-symbolic"))
-                    .on_press(ShortcutMessage::DeleteBinding(bind_id))
-                    .into();
+                // WMDE: an unlabelled button pressed against the input field, while the
+                // labelled button next to it does the opposite.
+                let delete_button = widget::tooltip(
+                    widget::button::icon(icon::from_name("edit-delete-symbolic"))
+                        .on_press(ShortcutMessage::DeleteBinding(bind_id)),
+                    text::body(fl!("remove-keybinding")),
+                    widget::tooltip::Position::Top,
+                )
+                .into();
                 children.push(delete_button);
             }
 
@@ -899,8 +905,14 @@ fn shortcut_item(
         .push(shortcuts)
         .push(icon::from_name("go-next-symbolic").size(16))
         .push_maybe(custom.then(|| {
-            widget::button::icon(icon::from_name("edit-delete-symbolic"))
-                .on_press(ShortcutMessage::DeleteShortcut(id))
+            // WMDE: the row itself is clickable and carries a go-next arrow, so the bare
+            // bin next to it has to say that it removes rather than opens.
+            widget::tooltip(
+                widget::button::icon(icon::from_name("edit-delete-symbolic"))
+                    .on_press(ShortcutMessage::DeleteShortcut(id)),
+                text::body(fl!("custom-shortcuts", "remove")),
+                widget::tooltip::Position::Top,
+            )
         }))
         .align_y(Alignment::Center)
         .spacing(8);

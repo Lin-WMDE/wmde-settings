@@ -1036,9 +1036,14 @@ fn devices_view() -> Section<crate::pages::Message> {
                                 )
                                 .apply(|e| Some(Element::from(e)))
                         } else {
-                            view_more_button
-                                .on_press(Message::ViewMore(Some(network.ssid.clone())))
-                                .apply(|e| Some(Element::from(e)))
+                            // WMDE: an ellipsis with no label, hiding four different actions.
+                            widget::tooltip(
+                                view_more_button
+                                    .on_press(Message::ViewMore(Some(network.ssid.clone()))),
+                                widget::text::body(fl!("more-options")),
+                                widget::tooltip::Position::Top,
+                            )
+                            .apply(|e| Some(Element::from(e)))
                         };
 
                         let controls = widget::row::with_capacity(2)
@@ -1141,9 +1146,14 @@ fn devices_view() -> Section<crate::pages::Message> {
                                 )
                                 .into()
                         } else {
-                            view_more_button
-                                .on_press(Message::ViewMore(Some(network.ssid.clone())))
-                                .into()
+                            // WMDE: the same unlabelled ellipsis in the neighbouring list.
+                            widget::tooltip(
+                                view_more_button
+                                    .on_press(Message::ViewMore(Some(network.ssid.clone()))),
+                                widget::text::body(fl!("more-options")),
+                                widget::tooltip::Position::Top,
+                            )
+                            .into()
                         };
 
                         let controls = widget::row::with_capacity(2)

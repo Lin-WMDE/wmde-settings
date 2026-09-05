@@ -435,7 +435,9 @@ fn apps() -> Section<crate::pages::Message> {
                                     row = row.push(text::body(&app.appid).width(Length::Fill));
                                 }
 
-                                row = row.push(
+                                // WMDE: the icon alone does not say whether the autostart
+                                // entry goes or the application itself.
+                                row = row.push(widget::tooltip(
                                     button::icon(icon::from_name("edit-delete-symbolic"))
                                         .extra_small()
                                         .on_press(
@@ -446,7 +448,9 @@ fn apps() -> Section<crate::pages::Message> {
                                             )
                                             .into(),
                                         ),
-                                );
+                                    text::body(fl!("startup-apps", "remove")),
+                                    widget::tooltip::Position::Top,
+                                ));
 
                                 section = section.add(row)
                             }

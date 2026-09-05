@@ -296,13 +296,17 @@ fn group_section(index: usize) -> Section<crate::pages::Message> {
             );
 
             if changed {
-                controls = controls.push(
+                // WMDE: appears only for a changed shortcut, and an undo arrow reads as
+                // "undo my typing" unless it says it restores the default.
+                controls = controls.push(widget::tooltip(
                     widget::button::icon(widget::icon::from_name("edit-undo-symbolic").size(16))
                         .on_press(crate::pages::Message::AppShortcuts(Message {
                             entity: page.entity,
                             kind: Kind::Reset(action.action.clone()),
                         })),
-                );
+                    widget::text::body(fl!("app-shortcuts", "reset")),
+                    widget::tooltip::Position::Top,
+                ));
             }
 
             list = list.add(settings::item(

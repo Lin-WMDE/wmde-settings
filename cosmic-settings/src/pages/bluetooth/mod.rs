@@ -1011,9 +1011,15 @@ fn connected_devices() -> Section<crate::pages::Message> {
                         )
                         .into()
                     } else {
-                        widget::button::icon(widget::icon::from_name("view-more-symbolic"))
-                            .on_press(Message::PopupDevice(Some(path.clone())))
-                            .into()
+                        // WMDE: the only way to disconnect or forget a device, and it says
+                        // nothing about itself.
+                        widget::tooltip(
+                            widget::button::icon(widget::icon::from_name("view-more-symbolic"))
+                                .on_press(Message::PopupDevice(Some(path.clone()))),
+                            text::body(fl!("more-options")),
+                            widget::tooltip::Position::Top,
+                        )
+                        .into()
                     };
 
                     Some(settings::item_row(vec![
