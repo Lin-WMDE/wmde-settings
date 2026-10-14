@@ -1,0 +1,102 @@
+# Один конфиг nFPM на оба формата. Стейджинг готовит `just package-staging`,
+# версию всегда подставляет just через env WMDE_VERSION (см. justfile).
+# ВАЖНО: только ${WMDE_VERSION} без :-дефолта — nFPM раскрывает env через
+# os.ExpandEnv и :- не понимает (версия молча станет 0.0.0~rc0).
+name: wmde-settings
+arch: amd64
+version: ${WMDE_VERSION}
+release: 1
+maintainer: WMDE <wmde@wmde.fun>
+description: |-
+  WMDE settings application (fork of cosmic-settings)
+  Displays, panels, appearance and hardware pages with per-page entries.
+homepage: https://wmde.fun
+license: GPL-3.0-only
+section: x11
+
+# Как в PKGBUILD: wayland/xkbcommon/input/udev, pipewire+pulse (звук),
+# шрифты, dav1d, hwdata (PCI/USB-таблицы), hicolor.
+depends:
+  - libc6 | glibc
+  - libgcc-s1 | libgcc
+  - libxkbcommon0
+  - libwayland-client0
+  - libinput10
+  - libudev1
+  - libpipewire-0.3-0t64
+  - libpulse0t64 | libpulse0
+  - libfontconfig1
+  - libdav1d7
+  - hwdata
+  - hicolor-icon-theme
+
+contents:
+  - src: target/staging/usr/bin/wmde-settings
+    dst: /usr/bin/wmde-settings
+    file_info: { mode: 0755 }
+  - src: target/staging/usr/share/applications/
+    dst: /usr/share/applications/
+    type: tree
+  - src: target/staging/usr/share/metainfo/
+    dst: /usr/share/metainfo/
+    type: tree
+  - src: target/staging/usr/share/polkit-1/
+    dst: /usr/share/polkit-1/
+    type: tree
+  - src: target/staging/usr/share/icons/
+    dst: /usr/share/icons/
+    type: tree
+  - src: target/staging/usr/share/wmde/
+    dst: /usr/share/wmde/
+    type: tree
+  # doc (copyright + changelog.Debian.gz) готовит just package-doc.
+  # Только для deb: в rpm нет %doc-разметки у nFPM,
+  # а лицензия и changelog там и так есть (License-тег + %changelog).
+  - src: target/staging/usr/share/doc/wmde-settings/
+    dst: /usr/share/doc/wmde-settings/
+    type: tree
+    packager: deb
+
+scripts:
+  postinstall: packaging/postinstall.sh
+  postremove: packaging/postremove.sh
+
+# %changelog для rpm генерит just package-staging (иначе E: no-changelogname-tag).
+# Путь от корня репо: nFPM резолвит его от cwd, а не от каталога конфига.
+changelog: target/changelog.yaml
+
+overrides:
+  deb:
+    depends:
+      - libc6
+      - libgcc-s1
+      - libxkbcommon0
+      - libwayland-client0
+      - libinput10
+      - libudev1
+      - libpipewire-0.3-0t64
+      - libpulse0t64 | libpulse0
+      - libfontconfig1
+      - libfreetype6
+      - libexpat1
+      - libdav1d7
+      - hwdata
+      - hicolor-icon-theme
+  rpm:
+    # SONAME вместо имён пакетов: имена расходятся между
+    # Fedora и openSUSE, а SONAME предоставляют обе семьи.
+    depends:
+      - libc.so.6()(64bit)
+      - libgcc_s.so.1()(64bit)
+      - libxkbcommon.so.0()(64bit)
+      - libinput.so.10()(64bit)
+      - libwayland-client.so.0()(64bit)
+      - libudev.so.1()(64bit)
+      - libpipewire-0.3.so.0()(64bit)
+      - libpulse.so.0()(64bit)
+      - libfontconfig.so.1()(64bit)
+      - libfreetype.so.6()(64bit)
+      - libexpat.so.1()(64bit)
+      - libdav1d.so.7()(64bit)
+      - hwdata
+      - hicolor-icon-theme

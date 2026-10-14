@@ -1,5 +1,7 @@
 name := 'wmde-settings'
 appid := 'fun.wmde.Settings'
+# Чтобы shell() работал и на Windows с Git Bash; на Linux игнорируется
+set windows-shell := ["C:\\Program Files\\Git\\bin\\sh.exe", "-cu"]
 rootdir := ''
 prefix := '/usr'
 
@@ -86,3 +88,85 @@ tag version:
     git add Cargo.lock
     git commit -m 'release: {{version}}'
     git tag -a {{version}} -m ''
+
+# Версия пакета как pkgver() в PKGBUILD: 1.10.0.<commits>.g<sha>.
+# Теги epoch-* дают только счётчик через git describe, fallback — rev-list.
+wmde-version := shell('desc=$(git describe --long --tags --abbrev=7 2>/dev/null || true); if [ -n "$desc" ]; then printf "1.10.0.%s.g%s" "$(printf "%s" "$desc" | sed -E "s/.*-([0-9]+)-g[0-9a-f]+$/\\1/")" "$(git rev-parse --short=7 HEAD)"; else printf "1.10.0.%s.g%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short=7 HEAD)"; fi')
+# CPU-baseline: пусто = чистый x86-64 (для deb/rpm по умолчанию), для v3: WMDE_CPU=x86-64-v3
+wmde-cpu := env('WMDE_CPU', '')
+
+# Раскладывает собранное в target/staging (тот же набор, что PKGBUILD кладёт в $pkgdir).
+# ZSTD_SYS_USE_PKG_CONFIG здесь не нужен (нет zstd-зависимости, в отличие от files/term/portal).
+package-staging staging="target/staging":
+    #!/usr/bin/env bash
+    set -e
+    rm -rf {{staging}}
+    if [ -n "{{wmde-cpu}}" ]; then export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }-C target-cpu={{wmde-cpu}}"; fi
+    just build-release
+    just rootdir="{{staging}}" prefix=/usr install
+    # Categories=WMDE в .desktop — незарегистрированная категория.
+    # OnlyShowIn=WMDE НЕ трогаем: это рабочая механика скрытия страниц от чужих DE.
+    # Правим только Categories и только в стейджинге, сырцы не трогаем.
+    sed -i 's/^Categories=WMDE$/Categories=X-WMDE;/' "{{staging}}/usr/share/applications/"*.desktop
+    # makepkg на Arch стрипает бинарники сам, в deb/rpm это делаем руками
+    strip --strip-unneeded "{{staging}}/usr/bin/"* 2>/dev/null || true
+    just package-doc "{{staging}}"
+
+# doc для deb/rpm: копирайт + changelog.yaml (nFPM сам разложит changelog
+# в changelog.Debian.gz для deb и в %changelog для rpm)
+package-doc staging="target/staging":
+    #!/usr/bin/env bash
+    set -e
+    mkdir -p "{{staging}}/usr/share/doc/{{name}}"
+    cp packaging/copyright "{{staging}}/usr/share/doc/{{name}}/copyright"
+    chmod 644 "{{staging}}/usr/share/doc/{{name}}/copyright"
+    printf -- '- semver: %s\n  date: %s\n  packager: WMDE <wmde@wmde.fun>\n  urgency: low\n  distribution: unstable\n  deb:\n    urgency: low\n    distributions:\n      - unstable\n  changes:\n    - note: Automated build via nFPM (see INSTALL.deb-rpm.md).\n' "{{wmde-version}}-1" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > target/changelog.yaml
+
+# Стейджинг из вендора: сборка без сети к git-зависимостям.
+# vendor.tar генерим один раз при наличии сети (`just vendor`), сам тарболл
+# в git не коммитится (см. .gitignore), на офлайн-машину его привозим файлом.
+# Соседние чек-ауты нужны и тут: path-зависимости вендором не покрываются.
+package-staging-vendored staging="target/staging":
+    #!/usr/bin/env bash
+    set -e
+    rm -rf {{staging}}
+    if [ ! -f vendor.tar ]; then just vendor; fi
+    if [ -n "{{wmde-cpu}}" ]; then export RUSTFLAGS="${RUSTFLAGS:+$RUSTFLAGS }-C target-cpu={{wmde-cpu}}"; fi
+    just build-vendored # сам распакует vendor.tar и соберёт --frozen --offline
+    just rootdir="{{staging}}" prefix=/usr install
+    sed -i 's/^Categories=WMDE$/Categories=X-WMDE;/' "{{staging}}/usr/share/applications/"*.desktop
+    strip --strip-unneeded "{{staging}}/usr/bin/"* 2>/dev/null || true
+    just package-doc "{{staging}}"
+    rm -rf vendor .cargo
+
+# Собирает .deb через nFPM (нужен nfpm в PATH)
+deb:
+    #!/usr/bin/env bash
+    set -e
+    just package-staging
+    export WMDE_VERSION="{{wmde-version}}"
+    nfpm package --config packaging/nfpm.yaml --packager deb --target target/
+
+# Собирает .rpm через nFPM (нужен nfpm в PATH)
+rpm:
+    #!/usr/bin/env bash
+    set -e
+    just package-staging
+    export WMDE_VERSION="{{wmde-version}}"
+    nfpm package --config packaging/nfpm.yaml --packager rpm --target target/
+
+# .deb из вендора (офлайн-сборка)
+deb-vendored:
+    #!/usr/bin/env bash
+    set -e
+    just package-staging-vendored
+    export WMDE_VERSION="{{wmde-version}}"
+    nfpm package --config packaging/nfpm.yaml --packager deb --target target/
+
+# .rpm из вендора (офлайн-сборка)
+rpm-vendored:
+    #!/usr/bin/env bash
+    set -e
+    just package-staging-vendored
+    export WMDE_VERSION="{{wmde-version}}"
+    nfpm package --config packaging/nfpm.yaml --packager rpm --target target/
