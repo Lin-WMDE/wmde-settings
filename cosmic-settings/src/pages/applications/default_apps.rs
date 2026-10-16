@@ -30,6 +30,12 @@ const DROPDOWN_CALENDAR: usize = 6;
 const DROPDOWN_TERMINAL: usize = 7;
 const DROPDOWN_TEXT_EDITOR: usize = 8;
 
+// WMDE: the notepad. wmde-session's mimeapps list makes it the default for exactly the types
+// its desktop entry declares - plain text, configs, scripts, source code - so the text editor
+// choice has to cover those types, or every type but text/plain stays with the notepad.
+const NOTEPAD_APP_ID: &str = "fun.wmde.Edit";
+const TEXT_EDITOR_MIMES: [&str; 2] = ["application/x-zerosize", "text/plain"];
+
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, PartialOrd, Ord)]
 pub enum Category {
     Audio,
@@ -68,6 +74,7 @@ pub struct CachedMimeApps {
     local_list: Option<(mime_apps::List, tokio::fs::File)>,
     apps: Vec<AppMeta>,
     known_mimes: BTreeSet<mime::Mime>,
+    text_editor_mimes: Vec<String>,
 }
 
 #[derive(Clone, Debug)]
@@ -145,6 +152,7 @@ impl page::Page<crate::pages::Message> for Page {
                 apps,
                 local_list,
                 known_mimes: mime_apps::mime_info::mime_types(),
+                text_editor_mimes: text_editor_mimes(&assocs),
             }))
             .into()
         })
@@ -231,10 +239,14 @@ impl Page {
                             "x-scheme-handler/https",
                         ],
                     ),
-                    Category::TextEditor => (
-                        DROPDOWN_TEXT_EDITOR,
-                        &["application/x-zerosize", "text/plain"],
-                    ),
+                    Category::TextEditor => (DROPDOWN_TEXT_EDITOR, {
+                        mime_types = mime_apps
+                            .text_editor_mimes
+                            .iter()
+                            .map(String::as_str)
+                            .collect();
+                        &mime_types
+                    }),
                     Category::Mime(_mime_type) => return Task::none(),
                 };
 
@@ -411,6 +423,21 @@ fn assign_default_terminal(config: &cosmic_config::Config, appid: &str) {
     }
 }
 
+/// WMDE: the types the text editor choice is written for: the two upstream writes, plus
+/// every type the notepad declares. Without the notepad installed, the upstream two.
+fn text_editor_mimes(assocs: &mime_apps::Associations) -> Vec<String> {
+    let mut mimes: Vec<String> = TEXT_EDITOR_MIMES.iter().map(|m| (*m).to_owned()).collect();
+    if let Some(notepad) = assocs.by_app_id.get(NOTEPAD_APP_ID) {
+        for mime in &notepad.mime_types {
+            let mime = mime.essence_str();
+            if !mimes.iter().any(|m| m == mime) {
+                mimes.push(mime.to_owned());
+            }
+        }
+    }
+    mimes
+}
+
 fn load_defaults(
     list: &mime_apps::List,
     assocs: &mime_apps::Associations,
@@ -543,5 +570,60 @@ async fn load_terminal_apps(list: &mime_apps::List, assocs: &mime_apps::Associat
         app_ids,
         apps,
         icons,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use mime_apps::associations::{App, Associations};
+    use std::collections::BTreeMap;
+
+    fn with_apps(apps: Vec<App>) -> Associations {
+        let apps: Vec<Arc<App>> = apps.into_iter().map(Arc::new).collect();
+        Associations {
+            by_app_id: apps
+                .iter()
+                .map(|app| (Arc::from(app.appid.as_ref()), app.clone()))
+                .collect::<BTreeMap<_, _>>(),
+            apps,
+        }
+    }
+
+    fn app(appid: &str, mime_types: &[&str]) -> App {
+        App {
+            appid: appid.into(),
+            name: appid.into(),
+            icon: None,
+            path: PathBuf::from(format!("/usr/share/applications/{appid}.desktop")).into(),
+            mime_types: mime_types.iter().map(|m| m.parse().unwrap()).collect(),
+            is_terminal: false,
+        }
+    }
+
+    #[test]
+    fn without_the_notepad_only_plain_text_and_empty_files() {
+        let assocs = with_apps(vec![app("vim", &["text/plain", "text/x-python"])]);
+        assert_eq!(
+            text_editor_mimes(&assocs),
+            ["application/x-zerosize", "text/plain"]
+        );
+    }
+
+    #[test]
+    fn the_notepad_s_types_join_once_each() {
+        let assocs = with_apps(vec![app(
+            NOTEPAD_APP_ID,
+            &["text/plain", "application/json", "text/x-python"],
+        )]);
+        assert_eq!(
+            text_editor_mimes(&assocs),
+            [
+                "application/x-zerosize",
+                "text/plain",
+                "application/json",
+                "text/x-python"
+            ]
+        );
     }
 }
