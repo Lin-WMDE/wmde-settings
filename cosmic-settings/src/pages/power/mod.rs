@@ -310,6 +310,7 @@ pub enum Message {
     ScreenOffTimeChange(Option<Duration>),
     SuspendOnAcTimeChange(Option<Duration>),
     SuspendOnBatteryTimeChange(Option<Duration>),
+    LockOnScreenOffChange(bool),
     BackendAvailabilityCheck(Option<backend::PowerBackendEnum>),
     CurrentPowerProfileUpdate(PowerProfile),
     Surface(surface::Action<crate::app::Message>),
@@ -374,6 +375,14 @@ impl Page {
                     .set_suspend_on_battery_time(&self.idle_config, time)
                 {
                     tracing::error!("failed to set suspend on battery time: {}", err)
+                }
+            }
+            Message::LockOnScreenOffChange(lock) => {
+                if let Err(err) = self
+                    .idle_conf
+                    .set_lock_on_screen_off(&self.idle_config, lock)
+                {
+                    tracing::error!("failed to set lock on screen off: {}", err)
                 }
             }
             Message::DeviceDisconnect(device_path) => self
@@ -587,6 +596,7 @@ fn power_saving() -> Section<crate::pages::Message> {
     let mut descriptions = Slab::new();
 
     let turn_off_screen_desc = descriptions.insert(fl!("power-saving", "turn-off-screen-after"));
+    let lock_on_screen_off_desc = descriptions.insert(fl!("power-saving", "lock-on-screen-off"));
     let auto_suspend_desc = descriptions.insert(fl!("power-saving", "auto-suspend"));
     let auto_suspend_ac_desc = descriptions.insert(fl!("power-saving", "auto-suspend-ac"));
     let auto_suspend_battery_desc =
@@ -617,18 +627,27 @@ fn power_saving() -> Section<crate::pages::Message> {
                     screen_off_time,
                     SCREEN_OFF_TIMES,
                     Message::ScreenOffTimeChange,
-                ))
-                .add(power_saving_row(
-                    &descriptions[if page.battery.is_present {
-                        auto_suspend_ac_desc
-                    } else {
-                        auto_suspend_desc
-                    }],
-                    &page.suspend_labels,
-                    suspend_on_ac_time,
-                    SUSPEND_TIMES,
-                    Message::SuspendOnAcTimeChange,
                 ));
+            // WMDE: wmde-idle locks right after the idle screen-off unless this is off.
+            if screen_off_time.is_some() {
+                section = section.add(
+                    settings::item::builder(&descriptions[lock_on_screen_off_desc]).toggler(
+                        page.idle_conf.lock_on_screen_off,
+                        Message::LockOnScreenOffChange,
+                    ),
+                );
+            }
+            section = section.add(power_saving_row(
+                &descriptions[if page.battery.is_present {
+                    auto_suspend_ac_desc
+                } else {
+                    auto_suspend_desc
+                }],
+                &page.suspend_labels,
+                suspend_on_ac_time,
+                SUSPEND_TIMES,
+                Message::SuspendOnAcTimeChange,
+            ));
             if page.battery.is_present {
                 section = section.add(power_saving_row(
                     &descriptions[auto_suspend_battery_desc],

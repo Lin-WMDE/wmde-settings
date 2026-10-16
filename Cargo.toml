@@ -100,6 +100,11 @@ cosmic-comp-config = { path = "../wmde-comp/cosmic-comp-config" }
 [patch.'https://github.com/pop-os/cosmic-panel']
 cosmic-panel-config = { path = "../wmde-panel/cosmic-panel-config" }
 
+# Idle config crate (fun.wmde.Idle) - original crate name/dir, local path: the Power page
+# and the wmde-idle daemon read one struct.
+[patch.'https://github.com/pop-os/cosmic-idle']
+cosmic-idle-config = { path = "../wmde-idle/cosmic-idle-config" }
+
 # libcosmic / cosmic-config / cosmic-theme / iced family -> local WMDE fork.
 # Pinning the whole family here retires the git-vs-path double-resolution in Cargo.lock.
 [patch.'https://github.com/pop-os/libcosmic']

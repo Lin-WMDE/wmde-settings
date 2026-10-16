@@ -709,6 +709,7 @@ power-mode = Power mode
 
 power-saving = Power saving options
     .turn-off-screen-after = Turn off the screen after
+    .lock-on-screen-off = Lock the screen when it turns off
     .auto-suspend = Automatic suspend
     .auto-suspend-ac = Automatic suspend when plugged in
     .auto-suspend-battery = Automatic suspend on battery power
