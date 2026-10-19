@@ -1,4 +1,4 @@
-app = Socruithe WMDE
+app = Socruithe
 dbus-connection-error = Theip ar nascadh le DBus
 ok = Ceart go leor
 unknown = Anaithnid

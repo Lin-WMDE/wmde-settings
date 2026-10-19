@@ -1,4 +1,4 @@
-app = WMDE設定
+app = 設定
 unknown = 不明
 
 ## Network & Wireless

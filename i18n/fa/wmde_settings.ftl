@@ -1,4 +1,4 @@
-app = تنظیمات WMDE
+app = تنظیمات
 unknown = نامشخص
 number = { $number }
 

@@ -13,10 +13,10 @@
 
 use cosmic::Task;
 use cosmic::iced::Alignment;
+use cosmic::units;
 use cosmic::widget::{settings, text};
 use cosmic_settings_page::{self as page, Section, section};
 use slotmap::SlotMap;
-use wmde_hardware::util::{fmt_bytes_dec, fmt_khz};
 use wmde_hardware::{FirmwareType, SecureBoot, SysInfo, Value};
 
 #[derive(Clone, Debug)]
@@ -220,7 +220,7 @@ fn processor() -> Section<crate::pages::Message> {
                 .add(row(&desc[cores], counts))
                 .add(row(
                     &desc[frequency],
-                    cpu.max_freq_khz.map_or_else(unknown, fmt_khz),
+                    cpu.max_freq_khz.map_or_else(unknown, clock),
                 ))
                 .into()
         })
@@ -246,10 +246,7 @@ fn storage() -> Section<crate::pages::Message> {
             }
 
             for disk in &page.info.disks {
-                let mut detail = vec![
-                    fmt_bytes_dec(disk.size_bytes),
-                    disk.kind.as_str().to_owned(),
-                ];
+                let mut detail = vec![units::size(disk.size_bytes), disk.kind.as_str().to_owned()];
                 if let Some(firmware) = &disk.firmware {
                     detail.push(firmware.clone());
                 }
@@ -274,8 +271,8 @@ fn storage() -> Section<crate::pages::Message> {
                     if let Some(usage) = partition.usage {
                         detail.push(fl!(
                             "hardware-usage",
-                            used = fmt_bytes_dec(usage.used),
-                            total = fmt_bytes_dec(usage.total),
+                            used = units::size(usage.used),
+                            total = units::size(usage.total),
                             percent = (usage.percent() as usize)
                         ));
                     }
@@ -476,4 +473,15 @@ fn value(value: &Value) -> String {
 
 fn unknown() -> String {
     fl!("unknown")
+}
+
+/// A kHz clock as GHz or MHz. WMDE: only the unit is translated, the decimal point stays a
+/// point; `wmde-hardware` knows nothing about localization, so the unit is picked here.
+fn clock(khz: u64) -> String {
+    if khz >= 1_000_000 {
+        let value = format!("{:.2}", khz as f64 / 1_000_000.0);
+        fl!("hardware-clock-ghz", value = value)
+    } else {
+        fl!("hardware-clock-mhz", value = (khz / 1000).to_string())
+    }
 }

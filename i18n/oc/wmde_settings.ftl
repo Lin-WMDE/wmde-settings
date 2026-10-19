@@ -51,6 +51,6 @@ xdg-entry-appearance = Aparéncia
 xdg-entry-displays-keywords = WMDE;Ecran;
 xdg-entry-date-time-comment = Fus orari, reglatge de l’ora automatica e formatatge de l’ora
 number = { $number }
-app = Configuracion de WMDE
+app = Configuracion
 dbus-connection-error = Fracàs de la connexion a DBus
 replace = Remplaçar

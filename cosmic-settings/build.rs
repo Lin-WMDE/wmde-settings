@@ -24,7 +24,7 @@ fn main() {
         ),
         (
             "fun.wmde.Settings.Accessibility",
-            "xdg-entry-ally",
+            "xdg-entry-a11y",
             "xdg-entry-a11y-comment",
             "xdg-entry-a11y-keywords",
         ),

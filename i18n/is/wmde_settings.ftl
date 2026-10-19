@@ -1,4 +1,4 @@
-app = WMDE Stillingar
+app = Stillingar
 cancel = Hætta við
 confirm = Staðfesta
 export = Flytja út

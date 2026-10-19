@@ -1,4 +1,4 @@
-app = WMDE 설정
+app = 설정
 desktop = 데스크톱
 dbus-connection-error = DBus 연결에 실패했습니다
 time-region = 지역 & 언어

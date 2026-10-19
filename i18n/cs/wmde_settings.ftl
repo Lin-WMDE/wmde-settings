@@ -1,4 +1,4 @@
-app = Nastavení WMDE
+app = Nastavení
 unknown = Neznámé
 number = { $number }
 

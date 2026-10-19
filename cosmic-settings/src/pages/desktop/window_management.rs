@@ -89,12 +89,9 @@ impl Default for Page {
             .unwrap_or(0);
 
         Page {
-            super_key_selections: vec![
-                fl!("super-key", "launcher"),
-                fl!("super-key", "workspaces"),
-                fl!("super-key", "applications"),
-                fl!("super-key", "none"),
-            ],
+            // WMDE: only the Start menu or nothing. The workspaces overview and the app
+            // library are not in the stack, so upstream's other two choices led nowhere.
+            super_key_selections: vec![fl!("super-key", "launcher"), fl!("super-key", "none")],
             super_key_active: super_key_active_config(),
             comp_config,
             focus_follows_cursor,
@@ -113,9 +110,7 @@ impl Page {
             Message::SuperKey(id) => {
                 let action = match id {
                     0 => Some(shortcuts::action::System::Launcher),
-                    1 => Some(shortcuts::action::System::WorkspaceOverview),
-                    2 => Some(shortcuts::action::System::AppLibrary),
-                    3 => None,
+                    1 => None,
                     _ => return cosmic::iced::Task::none(),
                 };
 
@@ -213,8 +208,6 @@ pub fn window_management() -> Section<crate::pages::Message> {
     crate::slab!(descriptions {
         super_key = fl!("super-key");
         _launcher = fl!("super-key", "launcher");
-        _workspaces = fl!("super-key", "workspaces");
-        _applications = fl!("super-key", "applications");
         _none = fl!("super-key", "none");
         edge_gravity = fl!("edge-gravity");
     });
@@ -324,8 +317,8 @@ fn super_key_active_config() -> Option<usize> {
         .find(|(binding, _action)| binding == &&super_binding)
         .and_then(|(_, action)| match action {
             Action::System(shortcuts::action::System::Launcher) => Some(0),
-            Action::System(shortcuts::action::System::WorkspaceOverview) => Some(1),
-            Action::System(shortcuts::action::System::AppLibrary) => Some(2),
+            // WMDE: "None" writes Disable, so show it as chosen instead of an empty field.
+            Action::Disable => Some(1),
             _ => None,
         })
 }

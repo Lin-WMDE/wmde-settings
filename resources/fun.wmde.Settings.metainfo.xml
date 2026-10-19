@@ -7,16 +7,17 @@
   <developer_name>WMDE</developer_name>
   <url type="homepage">https://github.com/Lin-WMDE/wmde-settings</url>
   <url type="bugtracker">https://github.com/Lin-WMDE/wmde-settings</url>
-  <name>WMDE Settings</name>
-  <name xml:lang="ar">إعدادات WMDE</name>
-  <name xml:lang="cs">Nastavení WMDE</name>
-  <name xml:lang="pl">Ustawienia WMDE</name>
-  <name xml:lang="hu">WMDE Beállítások</name>
+  <name>Settings</name>
+  <name xml:lang="uk">Налаштування</name>
+  <name xml:lang="ar">إعدادات</name>
+  <name xml:lang="cs">Nastavení</name>
+  <name xml:lang="pl">Ustawienia</name>
+  <name xml:lang="hu">Beállítások</name>
   <name xml:lang="pt">Configurações</name>
-  <name xml:lang="nl">WMDE instellingen</name>
-  <name xml:lang="sk">Nastavenia WMDE</name>
-  <name xml:lang="es">Configuración WMDE</name>
-  <name xml:lang="sv">WMDE Inställningar</name>
+  <name xml:lang="nl">Instellingen</name>
+  <name xml:lang="sk">Nastavenia</name>
+  <name xml:lang="es">Configuración</name>
+  <name xml:lang="sv">Inställningar</name>
   <summary>Settings application for the WMDE desktop</summary>
   <summary xml:lang="ar">تطبيق الإعدادات لسطح مكتب WMDE</summary>
   <summary xml:lang="cs">Aplikace nastavení pro pracovní prostředí WMDE</summary>

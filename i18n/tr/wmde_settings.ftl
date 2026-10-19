@@ -1,4 +1,4 @@
-app = WMDE Ayarları
+app = Ayarlar
 dbus-connection-error = DBus'a bağlanılamadı
 ok = Tamam
 unknown = Bilinmiyor

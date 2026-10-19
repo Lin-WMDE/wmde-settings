@@ -1,4 +1,4 @@
-app = Setări WMDE
+app = Setări
 dbus-connection-error = Nu s-a putut conecta la DBus
 ok = OK
 unknown = Necunoscut

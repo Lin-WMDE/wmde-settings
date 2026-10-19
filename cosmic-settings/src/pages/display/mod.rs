@@ -1530,9 +1530,16 @@ fn cache_rates(cached_rates: &mut Vec<String>, rates: &[u32]) {
         (*rate as f32 / 1000.0).round() as u32
     }
 
+    // WMDE: the unit comes from the translation; the number keeps its upstream format.
+    #[inline]
+    fn format_int(rate: &u32) -> String {
+        fl!("display-refresh-rate-hz", rate = round(rate).to_string())
+    }
+
     #[inline]
     fn format_dec(rate: &u32) -> String {
-        format!("{:>3}.{:02} Hz", rate / 1000, rate % 1000)
+        let rate = format!("{:>3}.{:02}", rate / 1000, rate % 1000);
+        fl!("display-refresh-rate-hz", rate = rate)
     }
 
     for (i, rate) in rates.iter().enumerate() {
@@ -1542,26 +1549,26 @@ fn cache_rates(cached_rates: &mut Vec<String>, rates: &[u32]) {
         };
 
         match (prev, rates.get(i + 1)) {
-            (None, None) => cached_rates.push(format!("{} Hz", round(rate))),
+            (None, None) => cached_rates.push(format_int(rate)),
             (None, Some(next)) => {
                 if round(rate) == round(next) {
                     cached_rates.push(format_dec(rate))
                 } else {
-                    cached_rates.push(format!("{} Hz", round(rate)))
+                    cached_rates.push(format_int(rate))
                 }
             }
             (Some(prev), None) => {
                 if round(rate) == round(prev) {
                     cached_rates.push(format_dec(rate))
                 } else {
-                    cached_rates.push(format!("{} Hz", round(rate)))
+                    cached_rates.push(format_int(rate))
                 }
             }
             (Some(prev), Some(next)) => {
                 if round(rate) == round(prev) || round(rate) == round(next) {
                     cached_rates.push(format_dec(rate))
                 } else {
-                    cached_rates.push(format!("{} Hz", round(rate)))
+                    cached_rates.push(format_int(rate))
                 }
             }
         }

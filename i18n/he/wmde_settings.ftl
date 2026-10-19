@@ -1,3 +1,3 @@
 connect = התחברות
-app = הגדרות WMDE
+app = הגדרות
 number = { $number }

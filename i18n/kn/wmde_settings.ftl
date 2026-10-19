@@ -1,4 +1,4 @@
-app = WMDE ಸೆಟ್ಟಿಂಗ್ಸ್
+app = ಸೆಟ್ಟಿಂಗ್ಸ್
 dbus-connection-error = DBus ಗೆ ಸಂಪರ್ಕಿಸುವಲ್ಲಿ ವಿಫಲವಾಗಿದೆ
 ok = ಸರಿ
 unknown = ಅಜ್ಞಾತ

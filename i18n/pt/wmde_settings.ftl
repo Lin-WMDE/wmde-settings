@@ -1,4 +1,4 @@
-app = Definições WMDE
+app = Definições
 unknown = Desconhecido
 number = { $number }
 

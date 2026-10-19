@@ -305,10 +305,12 @@ impl page::Page<crate::pages::Message> for Page {
                 // reports keypress notifications. Most keyboards don't support
                 // this, so entered stays at 0 for the entire pairing process.
                 if entered > 0 {
-                    let progress = widget::text::body(format!("{entered} / 6 keys entered"))
-                        .width(Length::Fill)
-                        .align_x(Alignment::Center)
-                        .wrapping(Wrapping::None);
+                    // WMDE: translated; upstream keeps this line as an English literal.
+                    let progress =
+                        widget::text::body(fl!("bluetooth-passkey-progress", entered = entered))
+                            .width(Length::Fill)
+                            .align_x(Alignment::Center)
+                            .wrapping(Wrapping::None);
                     control = control.push(progress);
                 }
 

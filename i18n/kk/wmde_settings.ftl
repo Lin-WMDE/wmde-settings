@@ -1,4 +1,4 @@
-app = WMDE баптаулары
+app = Баптаулар
 dbus-connection-error = DBus-қа қосылу сәтсіз аяқталды
 ok = ОК
 unknown = Белгісіз

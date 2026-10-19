@@ -94,9 +94,10 @@ impl page::AutoBind<crate::pages::Message> for Page {}
 #[must_use]
 pub const fn actions() -> &'static [Action] {
     &[
-        // No AppLibrary, Launcher, WorkspaceOverview, WindowSwitcher* or Screenshot:
-        // the launcher is out of the stack and nothing in the stack answers those
-        // system actions, so offering them would bind a key to nothing.
+        // WMDE: no Launcher. It opens the Start menu, and only the lone Super key does
+        // that, chosen on the Window management page; other keys for it were declined.
+        // No AppLibrary, WorkspaceOverview, WindowSwitcher* or Screenshot: nothing in the
+        // stack answers those system actions, so offering them would bind a key to nothing.
         Action::System(SystemAction::DisplayToggle),
         Action::System(SystemAction::LogOut),
         Action::System(SystemAction::LockScreen),

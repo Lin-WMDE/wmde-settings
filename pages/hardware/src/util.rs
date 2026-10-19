@@ -161,43 +161,6 @@ pub fn unescape_octal(s: &str) -> String {
     out
 }
 
-/// Formats a byte count with decimal (SI) units: what drive vendors print on the box.
-pub fn fmt_bytes_dec(bytes: u64) -> String {
-    const UNITS: &[&str] = &["B", "kB", "MB", "GB", "TB", "PB"];
-    fmt_scaled(bytes, 1000.0, UNITS)
-}
-
-/// Formats a byte count with binary (IEC) units: what the kernel actually reports.
-pub fn fmt_bytes_bin(bytes: u64) -> String {
-    const UNITS: &[&str] = &["B", "KiB", "MiB", "GiB", "TiB", "PiB"];
-    fmt_scaled(bytes, 1024.0, UNITS)
-}
-
-fn fmt_scaled(bytes: u64, step: f64, units: &[&str]) -> String {
-    let mut value = bytes as f64;
-    let mut unit = 0;
-    while value >= step && unit + 1 < units.len() {
-        value /= step;
-        unit += 1;
-    }
-    if unit == 0 {
-        format!("{bytes} {}", units[0])
-    } else if value >= 100.0 {
-        format!("{value:.0} {}", units[unit])
-    } else {
-        format!("{value:.1} {}", units[unit])
-    }
-}
-
-/// Formats a kHz clock as GHz/MHz.
-pub fn fmt_khz(khz: u64) -> String {
-    if khz >= 1_000_000 {
-        format!("{:.2} GHz", khz as f64 / 1_000_000.0)
-    } else {
-        format!("{} MHz", khz / 1000)
-    }
-}
-
 /// Splits an uptime in seconds into days/hours/minutes for the caller to localise.
 pub fn split_duration(secs: u64) -> (u64, u64, u64) {
     (secs / 86400, (secs % 86400) / 3600, (secs % 3600) / 60)
@@ -244,13 +207,6 @@ mod tests {
         assert!(is_placeholder("Default string"));
         assert!(is_placeholder("  "));
         assert!(!is_placeholder("TUF GAMING Z790-PRO WIFI"));
-    }
-
-    #[test]
-    fn byte_formatting_uses_the_right_base() {
-        assert_eq!(fmt_bytes_dec(2_000_398_934_016), "2.0 TB");
-        assert_eq!(fmt_bytes_bin(134_803_255_296), "126 GiB");
-        assert_eq!(fmt_bytes_dec(512), "512 B");
     }
 
     #[test]

@@ -9,7 +9,7 @@
 //! unit tested, and is shared with the Hardware page. What is left here is the mapping
 //! into the strings About renders, so the page itself barely had to change.
 
-use wmde_hardware::util::{fmt_bytes_bin, fmt_bytes_dec};
+use cosmic::units;
 use wmde_hardware::{SysInfo, Value};
 
 #[must_use]
@@ -57,20 +57,20 @@ impl From<&SysInfo> for Info {
             desktop_environment: format!("WMDE {}", env!("CARGO_PKG_VERSION")),
             device_name: value(&summary.hostname),
             disk_capacity: if summary.disk_total_bytes > 0 {
-                fmt_bytes_dec(summary.disk_total_bytes)
+                units::size(summary.disk_total_bytes)
             } else {
                 unknown()
             },
             graphics: summary.gpu_names.clone(),
             hardware_model: summary.machine().unwrap_or_else(unknown),
-            memory: summary.mem_total_bytes.map_or_else(unknown, fmt_bytes_bin),
+            memory: summary.mem_total_bytes.map_or_else(unknown, units::size),
             operating_system: value(&summary.os_name),
             os_architecture: value(&summary.architecture),
             kernel_version: value(&summary.kernel),
             processor: processor(info),
             windowing_system: summary.display_server.as_str().to_owned(),
             motherboard: value(&summary.board),
-            swap: summary.swap_total_bytes.map_or_else(unknown, fmt_bytes_bin),
+            swap: summary.swap_total_bytes.map_or_else(unknown, units::size),
         }
     }
 }

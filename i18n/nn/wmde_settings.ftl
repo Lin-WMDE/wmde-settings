@@ -1,4 +1,4 @@
-app = WMDE Innstillingar
+app = Innstillingar
 cancel = Avbryt
 close = Lukk
 dbus-connection-error = Klara ikkje å kobla til DBus

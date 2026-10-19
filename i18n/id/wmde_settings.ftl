@@ -1,4 +1,4 @@
-app = Pengaturan WMDE
+app = Pengaturan
 ok = OKE
 dbus-connection-error = Gagal menyambungkan ke DBus
 unknown = Tidak diketahui

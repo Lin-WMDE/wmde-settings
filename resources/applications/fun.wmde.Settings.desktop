@@ -1,5 +1,5 @@
 [Desktop Entry]
-Name=WMDE Settings
+Name=Settings
 Comment=Settings application for WMDE.
 Type=Application
 Exec=wmde-settings

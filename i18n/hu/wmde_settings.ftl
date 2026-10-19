@@ -1,4 +1,4 @@
-app = WMDE Beállítások
+app = Beállítások
 dbus-connection-error = Nem sikerült csatlakozni a D-Bushoz
 ok = OK
 unknown = Ismeretlen

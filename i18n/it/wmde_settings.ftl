@@ -1,4 +1,4 @@
-app = Impostazioni di WMDE
+app = Impostazioni
 dbus-connection-error = Connessione a DBus fallita
 ok = OK
 unknown = Sconosciuto

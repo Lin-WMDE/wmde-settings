@@ -4426,6 +4426,8 @@ dependencies = [
  "iced_wgpu",
  "iced_widget",
  "iced_winit",
+ "icu_decimal",
+ "icu_locale_core",
  "image",
  "image-extras",
  "jiff",

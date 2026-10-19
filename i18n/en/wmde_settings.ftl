@@ -6,7 +6,7 @@ number = { $number }
 
 ## Freedesktop desktop entries
 
-app = WMDE Settings
+app = Settings
 xdg-entry-comment = Settings application for the WMDE desktop
 xdg-entry-keywords = WMDE;Settings;
 
@@ -519,7 +519,7 @@ panel-remove = Remove panel
 window-management = Window management
 
 super-key = Super key action
-    .launcher = Open Launcher
+    .launcher = Open the Start menu
     .workspaces = Open Workspaces
     .applications = Open Applications
     .none = None
@@ -909,7 +909,7 @@ system-shortcut = System
     .home-folder = Open home folder
     .keyboard-brightness-down = Decrease keyboard brightness
     .keyboard-brightness-up = Increase keyboard brightness
-    .launcher = Open the Launcher
+    .launcher = Open the Start menu
     .log-out = Log Out
     .lock-screen = Lock the screen
     .mute = Mute audio output
@@ -1174,6 +1174,8 @@ hardware-processor = Processor
     .model = Model
     .cores = Cores / threads
     .frequency = Maximum frequency
+hardware-clock-ghz = { $value } GHz
+hardware-clock-mhz = { $value } MHz
 
 hardware-storage = Storage
 hardware-graphics = Graphics and displays
@@ -1204,3 +1206,8 @@ mute-microphone = Mute microphone
 unmute-microphone = Unmute microphone
 show-details = Show details
 hide-details = Hide details
+
+## WMDE: strings upstream kept as literals in code
+
+display-refresh-rate-hz = { $rate } Hz
+bluetooth-passkey-progress = { $entered } / 6 keys entered
