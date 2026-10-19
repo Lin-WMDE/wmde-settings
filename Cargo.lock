@@ -8721,7 +8721,7 @@ dependencies = [
 
 [[package]]
 name = "wmde-settings"
-version = "1.10.2"
+version = "1.10.3"
 dependencies = [
  "accounts-zbus",
  "anyhow",
