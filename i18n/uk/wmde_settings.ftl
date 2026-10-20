@@ -177,6 +177,12 @@ super-key = Клавіша Super
     .none = Нічого
 window-controls = Керування вікнами
     .active-window-hint = Підсвічувати активне вікно
+window-switcher = Перемикач вікон
+    .style = Вигляд
+    .style-grid = Мініатюри
+    .style-none = Без вікна
+    .minimized = Показувати згорнуті вікна
+    .blur = Розмивати тло робочого столу
 
 ## Desktop: Workspaces
 
@@ -390,8 +396,8 @@ nav-shortcuts = Навігація
     .last-workspace = Фокус на останній робочий простір
     .prev-workspace = Фокус на попередній робочий простір
     .next-workspace = Фокус на наступний робочий простір
-    .next-window = Фокус на наступне вікно
-    .prev-window = Фокус на попереднє вікно
+    .next-window = Перемикач вікон
+    .prev-window = Перемикач вікон у зворотному порядку
     .focus =
         Фокус на вікно { $direction ->
            *[down] вниз

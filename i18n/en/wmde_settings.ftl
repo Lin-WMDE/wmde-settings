@@ -526,6 +526,13 @@ super-key = Super key action
 
 edge-gravity = Floating windows gravitate to nearby edges
 
+window-switcher = Window switcher
+    .style = Look
+    .style-grid = Thumbnails
+    .style-none = No window
+    .minimized = Show minimized windows
+    .blur = Blur the desktop behind
+
 window-controls = Window controls
     .active-window-hint = Show active window hint
 
@@ -846,8 +853,8 @@ nav-shortcuts = Navigation
     .last-workspace = Focus last workspace
     .prev-workspace = Focus previous workspace
     .next-workspace = Focus next workspace
-    .next-window = Focus next window
-    .prev-window = Focus previous window
+    .next-window = Window switcher
+    .prev-window = Window switcher in reverse order
     .focus = Focus window { $direction ->
         *[down] down
         [in] in

@@ -5,7 +5,7 @@ use cosmic::iced::Length;
 use cosmic::widget::{self, settings};
 use cosmic::{Apply, Element, surface};
 
-use cosmic_comp_config::CosmicCompConfig;
+use cosmic_comp_config::{CosmicCompConfig, WindowSwitcherConfig, WindowSwitcherStyle};
 use cosmic_config::{ConfigGet, ConfigSet};
 use cosmic_settings_config::{Action, Binding, Shortcuts, shortcuts};
 use cosmic_settings_page::{self as page, Section, section};
@@ -22,6 +22,10 @@ pub enum Message {
     SetCursorFollowsFocus(bool),
     ShowActiveWindowHint(bool),
     SetEdgeSnapThreshold(u32),
+    // WMDE: the Alt+Tab window switcher, the `window_switcher` key of the compositor.
+    SwitcherStyle(usize),
+    SwitcherMinimized(bool),
+    SwitcherBlur(bool),
     Surface(surface::Action<crate::app::Message>),
 }
 
@@ -35,6 +39,8 @@ pub struct Page {
     cursor_follows_focus: bool,
     show_active_hint: bool,
     edge_snap_threshold: u32,
+    switcher: WindowSwitcherConfig,
+    switcher_styles: Vec<String>,
 }
 
 impl Default for Page {
@@ -88,6 +94,15 @@ impl Default for Page {
             })
             .unwrap_or(0);
 
+        let switcher = comp_config
+            .get::<WindowSwitcherConfig>("window_switcher")
+            .inspect_err(|err| {
+                if err.is_err() {
+                    error!(?err, "Failed to read config 'window_switcher'")
+                }
+            })
+            .unwrap_or_else(|_| CosmicCompConfig::default().window_switcher);
+
         Page {
             // WMDE: only the Start menu or nothing. The workspaces overview and the app
             // library are not in the stack, so upstream's other two choices led nowhere.
@@ -100,9 +115,19 @@ impl Default for Page {
             cursor_follows_focus,
             show_active_hint,
             edge_snap_threshold,
+            switcher,
+            // In the order of `SWITCHER_STYLES`.
+            switcher_styles: vec![
+                fl!("window-switcher", "style-grid"),
+                fl!("window-switcher", "style-none"),
+            ],
         }
     }
 }
+
+/// The looks the window switcher has, in the order of the dropdown.
+const SWITCHER_STYLES: [WindowSwitcherStyle; 2] =
+    [WindowSwitcherStyle::Grid, WindowSwitcherStyle::None];
 
 impl Page {
     pub fn update(&mut self, message: Message) -> cosmic::iced::Task<crate::app::Message> {
@@ -164,6 +189,22 @@ impl Page {
                 if comp_config.active_hint != self.show_active_hint {
                     self.show_active_hint = comp_config.active_hint;
                 }
+                self.switcher = comp_config.window_switcher;
+            }
+            Message::SwitcherStyle(index) => {
+                let Some(style) = SWITCHER_STYLES.get(index) else {
+                    return cosmic::iced::Task::none();
+                };
+                self.switcher.style = *style;
+                self.save_switcher();
+            }
+            Message::SwitcherMinimized(value) => {
+                self.switcher.include_minimized = value;
+                self.save_switcher();
+            }
+            Message::SwitcherBlur(value) => {
+                self.switcher.blur_background = value;
+                self.save_switcher();
             }
             Message::SetEdgeSnapThreshold(value) => {
                 self.edge_snap_threshold = value;
@@ -177,6 +218,13 @@ impl Page {
         };
         cosmic::iced::Task::none()
     }
+
+    /// The whole key at once: the compositor reads it as one value.
+    fn save_switcher(&self) {
+        if let Err(err) = self.comp_config.set("window_switcher", self.switcher) {
+            error!(?err, "Failed to set config 'window_switcher'");
+        }
+    }
 }
 
 impl page::Page<crate::pages::Message> for Page {
@@ -187,6 +235,7 @@ impl page::Page<crate::pages::Message> for Page {
     ) -> Option<page::Content> {
         Some(vec![
             sections.insert(window_management()),
+            sections.insert(window_switcher()),
             sections.insert(window_controls()),
             sections.insert(focus_navigation()),
         ])
@@ -239,6 +288,59 @@ pub fn window_management() -> Section<crate::pages::Message> {
                             Message::SetEdgeSnapThreshold(if is_enabled { 10 } else { 0 })
                         }),
                 )
+                .apply(Element::from)
+                .map(crate::pages::Message::WindowManagement)
+        })
+}
+
+// WMDE: the Alt+Tab window switcher drawn by the compositor. Its look is a dropdown because
+// more looks are to come; the toggles only matter to the thumbnails, so they go with them.
+pub fn window_switcher() -> Section<crate::pages::Message> {
+    crate::slab!(descriptions {
+        style = fl!("window-switcher", "style");
+        _grid = fl!("window-switcher", "style-grid");
+        _none = fl!("window-switcher", "style-none");
+        minimized = fl!("window-switcher", "minimized");
+        blur = fl!("window-switcher", "blur");
+    });
+
+    Section::default()
+        .title(fl!("window-switcher"))
+        .descriptions(descriptions)
+        .view::<Page>(move |_binder, page, section| {
+            let descriptions = &section.descriptions;
+            let thumbnails = page.switcher.style == WindowSwitcherStyle::Grid;
+
+            let mut section_view = settings::section().title(&section.title).add(
+                settings::item::builder(&descriptions[style]).control(
+                    widget::dropdown::popup_dropdown(
+                        &page.switcher_styles,
+                        SWITCHER_STYLES
+                            .iter()
+                            .position(|s| *s == page.switcher.style),
+                        Message::SwitcherStyle,
+                        cosmic::iced::window::Id::RESERVED,
+                        Message::Surface,
+                        |a| {
+                            crate::app::Message::PageMessage(
+                                crate::pages::Message::WindowManagement(a),
+                            )
+                        },
+                    ),
+                ),
+            );
+            if thumbnails {
+                section_view = section_view
+                    .add(
+                        settings::item::builder(&descriptions[minimized])
+                            .toggler(page.switcher.include_minimized, Message::SwitcherMinimized),
+                    )
+                    .add(
+                        settings::item::builder(&descriptions[blur])
+                            .toggler(page.switcher.blur_background, Message::SwitcherBlur),
+                    );
+            }
+            section_view
                 .apply(Element::from)
                 .map(crate::pages::Message::WindowManagement)
         })
