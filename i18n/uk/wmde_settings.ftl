@@ -511,12 +511,6 @@ touchpad = Сенсорна панель
     .acceleration = Увімкнути прискорення сенсорної панелі
     .speed = Швидкість сенсорної панелі
 
-drawing-tablet = Графічний планшет
-    .no-devices-detected = Графічних планшетів і пер не виявлено
-    .map-to-display = Привʼязати до дисплея
-    .not-set = Не вибрано
-    .enabled = Увімкнено
-
 ## Input: Gestures
 
 gestures = Жести
@@ -879,8 +873,6 @@ workspaces-overview = Режим огляду робочих просторів
     .launcher = Відкрити запускач
     .applications = Відкрити застосунки
 xdg-entry-touchpad = Сенсорна панель
-xdg-entry-drawing-tablet = Графічний планшет
-xdg-entry-drawing-tablet-comment = Привʼязка пера до дисплея
 xdg-entry-wired = Дротове
 xdg-entry-startup-apps-comment = Налаштування застосунків, які запускаються при вході у систему
 xdg-entry-region-language = Регіон та мова
@@ -950,7 +942,6 @@ xdg-entry-panel-keywords = WMDE;Панель;Віджет
 xdg-entry-desktop-keywords = WMDE;Стільниця;
 xdg-entry-x11-applications-keywords = WMDE;X11;Застосунок;Програма;Гра;Сумісність;
 xdg-entry-touchpad-keywords = WMDE;Сенсорна;Панель;Тачпад;Жести;
-xdg-entry-drawing-tablet-keywords = WMDE;Графічний;Планшет;Перо;Стилус;Чутливість;
 xdg-entry-system-keywords = WMDE;Про;Систему;Система;Інформація;Облікові;Записи;Обліковка;Мікропрограма;Прошивка;
 xdg-entry-wireless-keywords = WMDE;WiFi;Wi-Fi;Мережа;Зʼєднання;Підключення;
 xdg-entry-about-keywords = WMDE;Про;Систему
@@ -991,6 +982,16 @@ on-screen-keyboard = Екранна клавіатура
     .show-on-text-input = Показувати екранну клавіатуру під час вибору текстового поля
 date-time-applet-settings-title = Віджет дати й часу
 date-time-applet-settings-label = Налаштування віджета дати й часу
+xdg-entry-drawing-tablet = Графічний планшет
+xdg-entry-drawing-tablet-comment = Зіставлення з екраном
+xdg-entry-drawing-tablet-keywords = WMDE;Планшет;Малювання;Чутливість;
+drawing-tablet = Графічний планшет
+    .no-devices-detected = Не виявлено графічних планшетів або пристроїв зі стилусом
+    .map-to-display = Привʼязати до дисплея
+    .not-set = Не задано
+    .enabled = Увімкнено
+tap-and-drag = Натиснути та перетягнути
+drag-lock = Блокування перетягування
 
 ## WMDE: підсторінка «Обладнання» в категорії «Система й облікові записи»
 hardware = Обладнання
