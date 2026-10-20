@@ -532,6 +532,7 @@ window-switcher = Window switcher
     .style-none = No window
     .minimized = Show minimized windows
     .blur = Blur the desktop behind
+    .animate = Animate opening and closing
 
 window-controls = Window controls
     .active-window-hint = Show active window hint

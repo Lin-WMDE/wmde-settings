@@ -183,6 +183,7 @@ window-switcher = Перемикач вікон
     .style-none = Без вікна
     .minimized = Показувати згорнуті вікна
     .blur = Розмивати тло робочого столу
+    .animate = Анімувати відкриття й закриття
 
 ## Desktop: Workspaces
 

@@ -26,6 +26,7 @@ pub enum Message {
     SwitcherStyle(usize),
     SwitcherMinimized(bool),
     SwitcherBlur(bool),
+    SwitcherAnimate(bool),
     Surface(surface::Action<crate::app::Message>),
 }
 
@@ -206,6 +207,10 @@ impl Page {
                 self.switcher.blur_background = value;
                 self.save_switcher();
             }
+            Message::SwitcherAnimate(value) => {
+                self.switcher.animate = value;
+                self.save_switcher();
+            }
             Message::SetEdgeSnapThreshold(value) => {
                 self.edge_snap_threshold = value;
                 if let Err(err) = self.comp_config.set("edge_snap_threshold", value) {
@@ -302,6 +307,7 @@ pub fn window_switcher() -> Section<crate::pages::Message> {
         _none = fl!("window-switcher", "style-none");
         minimized = fl!("window-switcher", "minimized");
         blur = fl!("window-switcher", "blur");
+        animate = fl!("window-switcher", "animate");
     });
 
     Section::default()
@@ -338,6 +344,10 @@ pub fn window_switcher() -> Section<crate::pages::Message> {
                     .add(
                         settings::item::builder(&descriptions[blur])
                             .toggler(page.switcher.blur_background, Message::SwitcherBlur),
+                    )
+                    .add(
+                        settings::item::builder(&descriptions[animate])
+                            .toggler(page.switcher.animate, Message::SwitcherAnimate),
                     );
             }
             section_view
