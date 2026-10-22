@@ -120,6 +120,8 @@ impl Default for Page {
             // In the order of `SWITCHER_STYLES`.
             switcher_styles: vec![
                 fl!("window-switcher", "style-grid"),
+                fl!("window-switcher", "style-icons"),
+                fl!("window-switcher", "style-list"),
                 fl!("window-switcher", "style-none"),
             ],
         }
@@ -127,8 +129,12 @@ impl Default for Page {
 }
 
 /// The looks the window switcher has, in the order of the dropdown.
-const SWITCHER_STYLES: [WindowSwitcherStyle; 2] =
-    [WindowSwitcherStyle::Grid, WindowSwitcherStyle::None];
+const SWITCHER_STYLES: [WindowSwitcherStyle; 4] = [
+    WindowSwitcherStyle::Grid,
+    WindowSwitcherStyle::Icons,
+    WindowSwitcherStyle::List,
+    WindowSwitcherStyle::None,
+];
 
 impl Page {
     pub fn update(&mut self, message: Message) -> cosmic::iced::Task<crate::app::Message> {
@@ -298,12 +304,15 @@ pub fn window_management() -> Section<crate::pages::Message> {
         })
 }
 
-// WMDE: the Alt+Tab window switcher drawn by the compositor. Its look is a dropdown because
-// more looks are to come; the toggles only matter to the thumbnails, so they go with them.
+// WMDE: the Alt+Tab window switcher drawn by the compositor. Its look is a dropdown. Minimized
+// windows and the animation go with every look that shows a switcher, the blur only with the
+// thumbnails, the one look that blurs the desktop.
 pub fn window_switcher() -> Section<crate::pages::Message> {
     crate::slab!(descriptions {
         style = fl!("window-switcher", "style");
         _grid = fl!("window-switcher", "style-grid");
+        _icons = fl!("window-switcher", "style-icons");
+        _list = fl!("window-switcher", "style-list");
         _none = fl!("window-switcher", "style-none");
         minimized = fl!("window-switcher", "minimized");
         blur = fl!("window-switcher", "blur");
@@ -315,6 +324,7 @@ pub fn window_switcher() -> Section<crate::pages::Message> {
         .descriptions(descriptions)
         .view::<Page>(move |_binder, page, section| {
             let descriptions = &section.descriptions;
+            let shown = page.switcher.style != WindowSwitcherStyle::None;
             let thumbnails = page.switcher.style == WindowSwitcherStyle::Grid;
 
             let mut section_view = settings::section().title(&section.title).add(
@@ -335,20 +345,23 @@ pub fn window_switcher() -> Section<crate::pages::Message> {
                     ),
                 ),
             );
+            if shown {
+                section_view = section_view.add(
+                    settings::item::builder(&descriptions[minimized])
+                        .toggler(page.switcher.include_minimized, Message::SwitcherMinimized),
+                );
+            }
             if thumbnails {
-                section_view = section_view
-                    .add(
-                        settings::item::builder(&descriptions[minimized])
-                            .toggler(page.switcher.include_minimized, Message::SwitcherMinimized),
-                    )
-                    .add(
-                        settings::item::builder(&descriptions[blur])
-                            .toggler(page.switcher.blur_background, Message::SwitcherBlur),
-                    )
-                    .add(
-                        settings::item::builder(&descriptions[animate])
-                            .toggler(page.switcher.animate, Message::SwitcherAnimate),
-                    );
+                section_view = section_view.add(
+                    settings::item::builder(&descriptions[blur])
+                        .toggler(page.switcher.blur_background, Message::SwitcherBlur),
+                );
+            }
+            if shown {
+                section_view = section_view.add(
+                    settings::item::builder(&descriptions[animate])
+                        .toggler(page.switcher.animate, Message::SwitcherAnimate),
+                );
             }
             section_view
                 .apply(Element::from)
