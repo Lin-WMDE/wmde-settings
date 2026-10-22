@@ -258,6 +258,10 @@ impl Manager {
                     if cur.accent_text != new.accent_text {
                         _ = tx.set("accent_text", new.accent_text.clone());
                     }
+                    // WMDE: derived from the accent, so it follows a new one.
+                    if cur.icon_selection != new.icon_selection {
+                        _ = tx.set("icon_selection", new.icon_selection);
+                    }
                     _ = tx.commit();
                 }
             }
