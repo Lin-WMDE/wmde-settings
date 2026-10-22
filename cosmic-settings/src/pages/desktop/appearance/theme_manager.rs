@@ -262,6 +262,11 @@ impl Manager {
                     if cur.icon_selection != new.icon_selection {
                         _ = tx.set("icon_selection", new.icon_selection);
                     }
+                    // WMDE: the derivation gives list rows the text button hover, which the
+                    // control tint changes.
+                    if cur.list_button != new.list_button {
+                        _ = tx.set("list_button", new.list_button.clone());
+                    }
                     _ = tx.commit();
                 }
             }
